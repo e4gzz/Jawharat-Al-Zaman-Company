@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <title>العداد التنازلي للبروفايلات - لوحة التحكم الشاملة</title>
+    <!-- استدعاء مكتبات Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <style>
         :root {
             --bg-main: #0b0f19;
@@ -321,7 +324,21 @@
     </div>
 
     <script>
-        let accounts = JSON.parse(localStorage.getItem('simple_countdown_users_v9')) || {
+        const firebaseConfig = {
+            apiKey: "AIzaSyBraw98K7uLeQ5p7xmgn88x2jczO2EtzXM",
+            authDomain: "jawharat-al-zaman-company.firebaseapp.com",
+            databaseURL: "https://jawharat-al-zaman-company-default-rtdb.firebaseio.com",
+            projectId: "jawharat-al-zaman-company",
+            storageBucket: "jawharat-al-zaman-company.firebasestorage.app",
+            messagingSenderId: "117069348206",
+            appId: "1:117069348206:web:1d8e3c9c365557d02b557f",
+            measurementId: "G-DPKEELR14J"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let accounts = {
             "admin": { pass: "1234", role: "admin", name: "المدير الأساسي" }
         };
 
@@ -332,19 +349,43 @@
             currentUser = null;
         }
 
-        let data = JSON.parse(localStorage.getItem('simple_countdown_app_v9')) || {
+        let data = {
             "الهدف الأساسي": { days: 92, maxDays: 92, date: new Date().toDateString() }
         };
 
-        let current = Object.keys(data)[0] || "الهدف الأساسي";
+        let current = "الهدف الأساسي";
         let activeTab = 'countdown';
 
+        // الاستماع للتغييرات سحابياً من Firebase لتتزامن البيانات فوراً على كل الأجهزة
+        db.ref('app_data').on('value', (snapshot) => {
+            let val = snapshot.val();
+            if (val) {
+                data = val;
+                let keys = Object.keys(data);
+                if (!data[current] && keys.length > 0) {
+                    current = keys[0];
+                }
+                render();
+            }
+        });
+
+        db.ref('app_users').on('value', (snapshot) => {
+            let val = snapshot.val();
+            if (val) {
+                accounts = val;
+                renderUsersList();
+            } else {
+                // الحفاظ على حساب المدير الأساسي كحد أدنى
+                db.ref('app_users/admin').set({ pass: "1234", role: "admin", name: "المدير الأساسي" });
+            }
+        });
+
         function saveAppData() {
-            localStorage.setItem('simple_countdown_app_v9', JSON.stringify(data));
+            db.ref('app_data').set(data);
         }
 
         function saveUsersData() {
-            localStorage.setItem('simple_countdown_users_v9', JSON.stringify(accounts));
+            db.ref('app_users').set(accounts);
         }
 
         function checkDays() {
@@ -360,7 +401,7 @@
                     }
                 }
             }
-            if (changed) saveAppData();
+            if (changed && currentUser && currentUser.role === 'admin') saveAppData();
         }
 
         function getColorClass(d) {
@@ -377,7 +418,7 @@
             let u = uInput.value.trim();
             let p = pInput.value.trim();
 
-            if (accounts[u] && accounts[u].pass === p) {
+            if (accounts[u] && String(accounts[u].pass) === String(p)) {
                 currentUser = { username: u, ...accounts[u] };
                 localStorage.setItem('current_logged_user_v9', JSON.stringify(currentUser));
                 document.getElementById('loginOverlay').style.display = 'none';
@@ -438,186 +479,4 @@
             let role = document.getElementById('newUserRole').value;
 
             if (!u || !p) return alert('الرجاء ملء خانة اليوزر وكلمة المرور');
-            if (accounts[u]) return alert('هذا المستخدم موجود مسبقاً!');
-
-            accounts[u] = { pass: p, role: role, name: u };
-            saveUsersData();
-            
-            document.getElementById('newUsername').value = '';
-            document.getElementById('newUserPass').value = '';
-            renderUsersList();
-            alert('تم إنشاء المستخدم بنجاح!');
-        }
-
-        function deleteUser(username) {
-            if (username === currentUser.username) return alert('لا يمكنك حذف حسابك الحالي!');
-            if (Object.keys(accounts).length <= 1) return alert('يجب أن يبقى حساب مدير واحد على الأقل!');
-            
-            if (confirm(`هل تريد حذف المستخدم "${username}"؟`)) {
-                delete accounts[username];
-                saveUsersData();
-                renderUsersList();
-            }
-        }
-
-        function renderUsersList() {
-            let container = document.getElementById('usersListContainer');
-            if (!container) return;
-            container.innerHTML = '';
-
-            for (let uname in accounts) {
-                let item = document.createElement('div');
-                item.className = 'user-item';
-                let roleText = accounts[uname].role === 'admin' ? 'مدير' : 'مُشاهد';
-                
-                item.innerHTML = `
-                    <span><b>${uname}</b> (${roleText})</span>
-                    ${uname !== 'admin' ? `<button onclick="deleteUser('${uname}')" style="width: auto; padding: 4px 8px; font-size: 11px; background: #ef4444; margin-bottom:0;">حذف</button>` : '<span style="font-size:10px; color:var(--text-muted)">رئيسي</span>'}
-                `;
-                container.appendChild(item);
-            }
-        }
-
-        function applyPermissions() {
-            const adminElements = document.querySelectorAll('.admin-only');
-            const roleIndicator = document.getElementById('userRoleIndicator');
-
-            if (currentUser && currentUser.role === 'admin') {
-                adminElements.forEach(el => el.style.display = 'block');
-                roleIndicator.innerHTML = `<span class="role-badge" style="background: #10b981;">حساب: المدير (${currentUser.username})</span>`;
-                renderUsersList();
-            } else {
-                adminElements.forEach(el => el.style.display = 'none');
-                roleIndicator.innerHTML = `<span class="role-badge" style="background: #f59e0b; color:#000;">حساب: مُشاهد (${currentUser ? currentUser.username : ''})</span>`;
-                activeTab = 'countdown';
-            }
-        }
-
-        function render() {
-            if (!currentUser) {
-                document.getElementById('loginOverlay').style.display = 'flex';
-                return;
-            } else {
-                document.getElementById('loginOverlay').style.display = 'none';
-            }
-
-            applyPermissions();
-            checkDays();
-
-            const countdownView = document.getElementById('countdownCardView');
-            const createView = document.getElementById('createPanelView');
-            const settingsView = document.getElementById('settingsPanelView');
-            
-            const createToggleItem = document.getElementById('createMenuToggle');
-            const settingsToggleItem = document.getElementById('settingsMenuToggle');
-
-            if (createToggleItem) createToggleItem.classList.remove('active');
-            if (settingsToggleItem) settingsToggleItem.classList.remove('active');
-
-            if (currentUser.role === 'admin' && activeTab === 'create') {
-                countdownView.style.display = 'none';
-                createView.style.display = 'block';
-                settingsView.style.display = 'none';
-                if (createToggleItem) createToggleItem.classList.add('active');
-            } else if (currentUser.role === 'admin' && activeTab === 'settings') {
-                countdownView.style.display = 'none';
-                createView.style.display = 'none';
-                settingsView.style.display = 'block';
-                if (settingsToggleItem) settingsToggleItem.classList.add('active');
-            } else {
-                countdownView.style.display = 'block';
-                createView.style.display = 'none';
-                settingsView.style.display = 'none';
-            }
-
-            let container = document.getElementById('listContainer');
-            container.innerHTML = '';
-
-            let keys = Object.keys(data);
-            if (keys.length === 0) return;
-
-            if (!data[current]) current = keys[0];
-
-            keys.forEach(name => {
-                let item = document.createElement('div');
-                let isActive = (activeTab === 'countdown' && name === current);
-                item.className = `profile-item ${isActive ? 'active' : ''}`;
-                
-                let badgeClass = getColorClass(data[name].days);
-
-                item.innerHTML = `
-                    <span style="font-weight: 500;">${name}</span>
-                    <span class="badge ${badgeClass}">${data[name].days} يوم</span>
-                `;
-                item.onclick = () => {
-                    current = name;
-                    activeTab = 'countdown';
-                    render();
-                };
-                container.appendChild(item);
-            });
-
-            document.getElementById('activeTitle').textContent = current;
-            document.getElementById('daysDisplay').textContent = data[current].days;
-            let daysInput = document.getElementById('daysInput');
-            if (daysInput) daysInput.value = data[current].maxDays || 92;
-        }
-
-        function renameProfile() {
-            if (!currentUser || currentUser.role !== 'admin') return;
-            let newName = prompt(`أدخل الاسم الجديد للبروفايل "${current}":`, current);
-            if (!newName) return;
-            newName = newName.trim();
-            if (!newName) return alert('الاسم غير صالح');
-            if (data[newName]) return alert('هذا الاسم موجود مسبقاً!');
-
-            let newData = {};
-            for (let key in data) {
-                if (key === current) {
-                    newData[newName] = data[current];
-                } else {
-                    newData[key] = data[key];
-                }
-            }
-            data = newData;
-            current = newName;
-            saveAppData();
-            render();
-        }
-
-        function updateDays() {
-            if (!currentUser || currentUser.role !== 'admin') return;
-            let val = parseInt(document.getElementById('daysInput').value);
-            if (isNaN(val) || val < 1 || val > 365) return alert('أدخل رقماً بين 1 و 365');
-
-            data[current].days = val;
-            data[current].maxDays = val;
-            data[current].date = new Date().toDateString();
-            saveAppData();
-            render();
-        }
-
-        function deleteProfile() {
-            if (!currentUser || currentUser.role !== 'admin') return;
-            if (Object.keys(data).length <= 1) return alert('لا يمكنك حذف البروفايل الوحيد!');
-            if (confirm(`هل أنت متأكد من حذف بروفايل "${current}"؟`)) {
-                delete data[current];
-                current = Object.keys(data)[0];
-                saveAppData();
-                render();
-            }
-        }
-
-        window.onload = () => {
-            if (currentUser && accounts[currentUser.username]) {
-                document.getElementById('loginOverlay').style.display = 'none';
-                render();
-            } else {
-                currentUser = null;
-                localStorage.removeItem('current_logged_user_v9');
-                document.getElementById('loginOverlay').style.display = 'flex';
-            }
-        };
-    </script>
-</body>
-</html>
+            if (
