@@ -79,7 +79,6 @@
             .profiles-list { flex: none; max-height: 220px; }
             .card { padding: 20px 15px; }
             .big-number { font-size: 45px; }
-            /* 16px يمنع المتصفح من تكبير الصفحة تلقائياً لما تضغط على خانة إدخال */
             input, select, button { font-size: 16px; }
             #loginOverlay { overflow-y: auto; }
         }
@@ -168,8 +167,25 @@
         const $ = id => document.getElementById(id);
         const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-        let accounts = null;   // تجي من Firestore
-        let data = null;       // تجي من Firestore
+        // ===== التاريخ والعد التنازلي (ينقص يوم عند 12 بالليل) =====
+        const pad = n => String(n).padStart(2, '0');
+        const todayKey = () => {
+            const d = new Date();
+            return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+        };
+        const dayNum = k => { const [y, m, d] = k.split('-').map(Number); return Date.UTC(y, m - 1, d) / 86400000; };
+        const remaining = p => {
+            const total = p.maxDays ?? p.days;
+            const passed = Math.max(0, dayNum(todayKey()) - dayNum(p.start || todayKey()));
+            return Math.max(0, total - passed);
+        };
+
+        // وقت آخر تحديث للصفحة (وقت فتحها أو عمل Refresh)
+        const loadedAt = new Date();
+        const loadTime = `${pad(loadedAt.getHours())}:${pad(loadedAt.getMinutes())}`;
+
+        let accounts = null;
+        let data = null;
         let currentUser = null;
         try { currentUser = JSON.parse(localStorage.getItem('current_logged_user_v11')); } catch (e) {}
         let current = null;
@@ -183,7 +199,6 @@
             $('loginError').textContent = 'خطأ بالاتصال بقاعدة البيانات: ' + (err.code || err.message);
         }
 
-        // مزامنة مباشرة مع Firestore
         onSnapshot(usersRef, snap => {
             if (snap.exists()) accounts = snap.data().accounts;
             else { accounts = { admin: { pass: "1234", role: "admin", name: "المدير الأساسي" } }; saveUsers(); }
@@ -192,10 +207,20 @@
 
         onSnapshot(profilesRef, snap => {
             if (snap.exists()) data = snap.data().data;
-            else { data = { "الهدف الأساسي": { days: 92, maxDays: 92 } }; saveData(); }
+            else { data = { "الهدف الأساسي": { days: 92, maxDays: 92, start: todayKey() } }; saveData(); }
+            // البروفايلات القديمة اللي ما لها تاريخ بداية تبدأ من اليوم
+            let changed = false;
+            for (const n in data) if (!data[n].start) { data[n].start = todayKey(); changed = true; }
+            if (changed) saveData();
             if (!current || !data[current]) current = Object.keys(data)[0];
             render();
         }, showError);
+
+        // إذا تغيّر اليوم والصفحة مفتوحة، يتحدث الرقم تلقائياً
+        let lastDay = todayKey();
+        setInterval(() => {
+            if (todayKey() !== lastDay) { lastDay = todayKey(); render(); }
+        }, 30000);
 
         function getColorClass(d) {
             if (d > 20) return 'bg-green';
@@ -231,7 +256,7 @@
             const days = parseInt($('newProfileDaysInput').value);
             if (!name || isNaN(days)) return alert('أدخل بيانات صحيحة');
             if (data[name]) return alert('البروفايل موجود مسبقاً');
-            data[name] = { days, maxDays: days };
+            data[name] = { days, maxDays: days, start: todayKey() };
             current = name;
             saveData();
             $('newProfileNameInput').value = '';
@@ -267,6 +292,7 @@
             if (isNaN(val)) return;
             data[current].days = val;
             data[current].maxDays = val;
+            data[current].start = todayKey();
             saveData();
             render();
         }
@@ -311,7 +337,6 @@
             $('adminSettingsSection').style.display = isAdmin ? 'block' : 'none';
             $('adminBottomMenu').style.display = isAdmin ? 'flex' : 'none';
 
-            // قائمة المستخدمين
             if (isAdmin) {
                 $('usersListContainer').innerHTML = Object.keys(accounts).map(u =>
                     `<div class="user-item"><span><b>${esc(u)}</b> (${esc(accounts[u].role)})</span> ` +
@@ -321,21 +346,26 @@
                     `</div>`).join('');
             }
 
-            // قائمة البروفايلات
-            $('listContainer').innerHTML = Object.keys(data).map(name =>
-                `<div class="profile-item ${name === current && activeTab === 'countdown' ? 'active' : ''}" data-act="select" data-name="${esc(name)}">
+            $('listContainer').innerHTML = Object.keys(data).map(name => {
+                const left = remaining(data[name]);
+                return `<div class="profile-item ${name === current && activeTab === 'countdown' ? 'active' : ''}" data-act="select" data-name="${esc(name)}">
                     <span style="font-weight: 500;">${esc(name)}</span>
-                    <span class="badge ${getColorClass(data[name].days)}">${data[name].days} يوم</span>
-                </div>`).join('');
+                    <span class="badge ${getColorClass(left)}">${left} يوم</span>
+                </div>`;
+            }).join('');
 
             if (data[current]) {
-                $('activeTitle').textContent = current;
-                $('daysDisplay').textContent = data[current].days;
-                $('daysInput').value = data[current].maxDays || data[current].days;
+                const now = new Date();
+                const dayName = now.toLocaleDateString('ar-IQ', { weekday: 'long' });
+                const dateStr = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}`;
+                $('activeTitle').innerHTML =
+                    `${dayName} ${dateStr}` +
+                    `<div style="font-size:13px; color:var(--text-muted); font-weight:400; margin-top:4px;">آخر تحديث للصفحة: ${loadTime}</div>`;
+                $('daysDisplay').textContent = remaining(data[current]);
+                $('daysInput').value = data[current].maxDays ?? data[current].days;
             }
         }
 
-        // التعامل مع كل الأزرار من مكان واحد
         document.addEventListener('click', e => {
             const el = e.target.closest('[data-act]');
             if (!el) return;
