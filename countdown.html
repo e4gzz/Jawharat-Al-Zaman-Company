@@ -176,31 +176,63 @@
             return 'bg-red';
         }
 
-        // جلب البيانات من السيرفر عند بدء التشغيل وتحديثها فوراً عند أي تغيير
-        db.ref('app_data').on('value', (snapshot) => {
-            let val = snapshot.val();
-            if (val) {
-                data = val;
-                if (!current || !data[current]) current = Object.keys(data)[0];
-            } else {
-                db.ref('app_data').set(data);
-            }
-            render();
-        });
+        // تحميل البيانات مرة واحدة عند الفتح وتجنب إعادة الكتابة الخاطئة
+        function initApp() {
+            db.ref('app_data').once('value').then((snapshot) => {
+                let val = snapshot.val();
+                if (val) {
+                    data = val;
+                    if (!current || !data[current]) current = Object.keys(data)[0];
+                } else {
+                    db.ref('app_data').set(data);
+                }
+                
+                // تفعيل المزامنة بعد التحميل الأول
+                db.ref('app_data').on('value', (snap) => {
+                    let liveVal = snap.val();
+                    if (liveVal) {
+                        data = liveVal;
+                        if (!current || !data[current]) current = Object.keys(data)[0];
+                        render();
+                    }
+                });
+            });
 
-        db.ref('app_users').on('value', (snapshot) => {
-            let val = snapshot.val();
-            if (val) {
-                accounts = val;
-                if (!accounts["admin"]) {
-                    accounts["admin"] = { pass: "1234", role: "admin", name: "المدير الأساسي" };
+            db.ref('app_users').once('value').then((snapshot) => {
+                let val = snapshot.val();
+                if (val) {
+                    accounts = val;
+                    if (!accounts["admin"]) {
+                        accounts["admin"] = { pass: "1234", role: "admin", name: "المدير الأساسي" };
+                        db.ref('app_users').set(accounts);
+                    }
+                } else {
                     db.ref('app_users').set(accounts);
                 }
+
+                db.ref('app_users').on('value', (snap) => {
+                    let liveVal = snap.val();
+                    if (liveVal) {
+                        accounts = liveVal;
+                        if (!accounts["admin"]) {
+                            accounts["admin"] = { pass: "1234", role: "admin", name: "المدير الأساسي" };
+                        }
+                        renderUsersList();
+                    }
+                });
+            });
+
+            checkAuthAndRender();
+        }
+
+        function checkAuthAndRender() {
+            if (!currentUser) {
+                document.getElementById('loginOverlay').style.display = 'flex';
             } else {
-                db.ref('app_users').set(accounts);
+                document.getElementById('loginOverlay').style.display = 'none';
+                render();
             }
-            renderUsersList();
-        });
+        }
 
         function handleLogin() {
             let u = document.getElementById('loginUser').value.trim();
@@ -311,11 +343,7 @@
         }
 
         function render() {
-            if (!currentUser) {
-                document.getElementById('loginOverlay').style.display = 'flex';
-                return;
-            }
-            document.getElementById('loginOverlay').style.display = 'none';
+            if (!currentUser) return;
             
             let adminEls = document.querySelectorAll('.admin-only');
             adminEls.forEach(el => {
@@ -351,7 +379,7 @@
         }
 
         window.onload = () => {
-            render();
+            initApp();
         };
     </script>
 </body>
