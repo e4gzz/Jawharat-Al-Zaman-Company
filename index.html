@@ -44,7 +44,7 @@
         
         <input type="text" id="loginUser" placeholder="اسم المستخدم" autocomplete="off">
         <input type="password" id="loginPass" placeholder="كلمة المرور">
-        <button id="loginBtn" onclick="handleLogin()">دخول</button>
+        <button onclick="handleLogin()">دخول</button>
         <div id="loginError" class="error-msg"></div>
     </div>
 
@@ -67,34 +67,24 @@
             let uInput = document.getElementById('loginUser').value.trim();
             let pInput = document.getElementById('loginPass').value.trim();
             let err = document.getElementById('loginError');
-            let btn = document.getElementById('loginBtn');
 
             if (!uInput || !pInput) {
                 err.textContent = 'الرجاء إدخال اسم المستخدم وكلمة المرور';
                 return;
             }
 
-            btn.textContent = 'جاري التحقق...';
-            btn.disabled = true;
-            err.textContent = '';
-
-            db.ref('users/' + uInput).once('value').then((snapshot) => {
+            // فحص مباشر مبسط جداً من قاعدة البيانات
+            db.ref('users/' + uInput).on('value', (snapshot) => {
                 let userData = snapshot.val();
-                
                 if (userData && String(userData.pass) === String(pInput)) {
                     let currentUser = { username: uInput, ...userData };
                     localStorage.setItem('current_logged_user_v10', JSON.stringify(currentUser));
-                    // التوجيه مع مراعاة اسم المسار في GitHub
-                    window.location.href = './countdown.html';
+                    window.location.href = 'countdown.html';
                 } else {
-                    btn.textContent = 'دخول';
-                    btn.disabled = false;
                     err.textContent = 'اسم المستخدم أو كلمة المرور غير صحيحة!';
                 }
-            }).catch((error) => {
-                btn.textContent = 'دخول';
-                btn.disabled = false;
-                err.textContent = 'خطأ في الاتصال: ' + error.message;
+            }, (error) => {
+                err.textContent = 'حدث خطأ بالاتصال بالسيرفر';
             });
         }
     </script>
