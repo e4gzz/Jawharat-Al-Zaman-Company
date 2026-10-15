@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>العداد التنازلي للبروفايلات</title>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <style>
         :root {
             --bg-main: #0b0f19;
@@ -84,7 +82,7 @@
 </head>
 <body>
 
-    <div id="loginOverlay" style="display: none;">
+    <div id="loginOverlay">
         <div class="login-card">
             <h2 style="color: var(--primary); margin-top:0;">تسجيل الدخول</h2>
             <input type="text" id="loginUser" placeholder="اسم المستخدم" autocomplete="off">
@@ -128,7 +126,7 @@
             <h2 style="color: var(--primary); text-align: center; margin-top:0;">إنشاء بروفايل جديد</h2>
             <input type="text" id="newProfileNameInput" placeholder="اسم البروفايل..." autocomplete="off">
             <input type="number" id="newProfileDaysInput" min="1" max="365" value="92">
-            <button onclick="submitCreateProfile()">إنشاء وحفظ في السيرفر</button>
+            <button onclick="submitCreateProfile()">إنشاء وحفظ</button>
             <button class="btn-secondary" onclick="activeTab = 'countdown'; render();" style="margin-top: 5px;">إلغاء</button>
         </div>
 
@@ -140,98 +138,38 @@
                 <option value="viewer">مُشاهد (قراءة فقط)</option>
                 <option value="admin">مدير (تحكم كامل)</option>
             </select>
-            <button onclick="createNewUser()">حفظ المستخدم في السيرفر</button>
+            <button onclick="createNewUser()">حفظ المستخدم</button>
             <div id="usersListContainer" style="max-height: 120px; overflow-y: auto; margin-top: 10px;"></div>
             <button class="btn-secondary" onclick="activeTab = 'countdown'; render();" style="margin-top: 10px;">العودة</button>
         </div>
     </div>
 
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyBraw98K7uLeQ5p7xmgn88x2jczO2EtzXM",
-            authDomain: "jawharat-al-zaman-company.firebaseapp.com",
-            databaseURL: "https://jawharat-al-zaman-company-default-rtdb.firebaseio.com",
-            projectId: "jawharat-al-zaman-company",
-            storageBucket: "jawharat-al-zaman-company.firebasestorage.app",
-            messagingSenderId: "117069348206",
-            appId: "1:117069348206:web:1d8e3c9c365557d02b557f",
-            measurementId: "G-DPKEELR14J"
-        };
-
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-
-        let accounts = {
+        // قاعدة البيانات المحلية المستقرة تماماً والتي لا تنمسح عند الرفريش
+        let accounts = JSON.parse(localStorage.getItem('app_users_v10')) || {
             "admin": { pass: "1234", role: "admin", name: "المدير الأساسي" }
         };
 
-        let currentUser = JSON.parse(localStorage.getItem('current_logged_user_v9')) || null;
-        let data = { "الهدف الأساسي": { days: 92, maxDays: 92, date: new Date().toDateString() } };
-        let current = "الهدف الأساسي";
+        let data = JSON.parse(localStorage.getItem('app_data_v10')) || {
+            "الهدف الأساسي": { days: 92, maxDays: 92, date: new Date().toDateString() }
+        };
+
+        let currentUser = JSON.parse(localStorage.getItem('current_logged_user_v10')) || null;
+        let current = Object.keys(data)[0] || "الهدف الأساسي";
         let activeTab = 'countdown';
+
+        function saveData() {
+            localStorage.setItem('app_data_v10', JSON.stringify(data));
+        }
+
+        function saveUsers() {
+            localStorage.setItem('app_users_v10', JSON.stringify(accounts));
+        }
 
         function getColorClass(d) {
             if (d > 20) return 'bg-green';
             if (d > 10) return 'bg-yellow';
             return 'bg-red';
-        }
-
-        // تحميل البيانات مرة واحدة عند الفتح وتجنب إعادة الكتابة الخاطئة
-        function initApp() {
-            db.ref('app_data').once('value').then((snapshot) => {
-                let val = snapshot.val();
-                if (val) {
-                    data = val;
-                    if (!current || !data[current]) current = Object.keys(data)[0];
-                } else {
-                    db.ref('app_data').set(data);
-                }
-                
-                // تفعيل المزامنة بعد التحميل الأول
-                db.ref('app_data').on('value', (snap) => {
-                    let liveVal = snap.val();
-                    if (liveVal) {
-                        data = liveVal;
-                        if (!current || !data[current]) current = Object.keys(data)[0];
-                        render();
-                    }
-                });
-            });
-
-            db.ref('app_users').once('value').then((snapshot) => {
-                let val = snapshot.val();
-                if (val) {
-                    accounts = val;
-                    if (!accounts["admin"]) {
-                        accounts["admin"] = { pass: "1234", role: "admin", name: "المدير الأساسي" };
-                        db.ref('app_users').set(accounts);
-                    }
-                } else {
-                    db.ref('app_users').set(accounts);
-                }
-
-                db.ref('app_users').on('value', (snap) => {
-                    let liveVal = snap.val();
-                    if (liveVal) {
-                        accounts = liveVal;
-                        if (!accounts["admin"]) {
-                            accounts["admin"] = { pass: "1234", role: "admin", name: "المدير الأساسي" };
-                        }
-                        renderUsersList();
-                    }
-                });
-            });
-
-            checkAuthAndRender();
-        }
-
-        function checkAuthAndRender() {
-            if (!currentUser) {
-                document.getElementById('loginOverlay').style.display = 'flex';
-            } else {
-                document.getElementById('loginOverlay').style.display = 'none';
-                render();
-            }
         }
 
         function handleLogin() {
@@ -241,18 +179,9 @@
 
             if (!u || !p) { err.textContent = 'أدخل اسم المستخدم وكلمة المرور'; return; }
             
-            if (u === 'admin' && p === '1234') {
-                currentUser = { username: 'admin', pass: '1234', role: 'admin', name: 'المدير الأساسي' };
-                localStorage.setItem('current_logged_user_v9', JSON.stringify(currentUser));
-                document.getElementById('loginOverlay').style.display = 'none';
-                render();
-                return;
-            }
-
             if (accounts[u] && String(accounts[u].pass) === String(p)) {
                 currentUser = { username: u, ...accounts[u] };
-                localStorage.setItem('current_logged_user_v9', JSON.stringify(currentUser));
-                document.getElementById('loginOverlay').style.display = 'none';
+                localStorage.setItem('current_logged_user_v10', JSON.stringify(currentUser));
                 err.textContent = '';
                 render();
             } else {
@@ -261,9 +190,9 @@
         }
 
         function logout() {
-            localStorage.removeItem('current_logged_user_v9');
+            localStorage.removeItem('current_logged_user_v10');
             currentUser = null;
-            location.reload();
+            render();
         }
 
         function toggleView(tab) { activeTab = tab; render(); }
@@ -272,14 +201,14 @@
             let name = document.getElementById('newProfileNameInput').value.trim();
             let days = parseInt(document.getElementById('newProfileDaysInput').value);
             if (!name || isNaN(days)) return alert('أدخل بيانات صحيحة');
+            if (data[name]) return alert('البروفايل موجود مسبقاً');
             
             data[name] = { days: days, maxDays: days, date: new Date().toDateString() };
             current = name;
-            db.ref('app_data').set(data).then(() => {
-                document.getElementById('newProfileNameInput').value = '';
-                activeTab = 'countdown';
-                render();
-            });
+            saveData();
+            document.getElementById('newProfileNameInput').value = '';
+            activeTab = 'countdown';
+            render();
         }
 
         function createNewUser() {
@@ -291,18 +220,19 @@
             if (accounts[u]) return alert('المستخدم موجود مسبقاً!');
 
             accounts[u] = { pass: p, role: role, name: u };
-            db.ref('app_users').set(accounts).then(() => {
-                document.getElementById('newUsername').value = '';
-                document.getElementById('newUserPass').value = '';
-                alert('تم حفظ المستخدم في السيرفر بنجاح!');
-            });
+            saveUsers();
+            renderUsersList();
+            document.getElementById('newUsername').value = '';
+            document.getElementById('newUserPass').value = '';
+            alert('تم حفظ المستخدم بنجاح!');
         }
 
         function deleteUser(uname) {
             if (uname === 'admin') return alert('لا يمكن حذف المدير الرئيسي');
             if (confirm(`حذف المستخدم ${uname}؟`)) {
                 delete accounts[uname];
-                db.ref('app_users').set(accounts);
+                saveUsers();
+                renderUsersList();
             }
         }
 
@@ -320,7 +250,8 @@
             if (isNaN(val)) return;
             data[current].days = val;
             data[current].maxDays = val;
-            db.ref('app_data').set(data);
+            saveData();
+            render();
         }
 
         function renameProfile() {
@@ -330,7 +261,8 @@
             data[newName] = data[current];
             delete data[current];
             current = newName;
-            db.ref('app_data').set(data);
+            saveData();
+            render();
         }
 
         function deleteProfile() {
@@ -338,12 +270,18 @@
             if (confirm(`حذف بروفايل ${current}؟`)) {
                 delete data[current];
                 current = Object.keys(data)[0];
-                db.ref('app_data').set(data);
+                saveData();
+                render();
             }
         }
 
         function render() {
-            if (!currentUser) return;
+            let overlay = document.getElementById('loginOverlay');
+            if (!currentUser || !accounts[currentUser.username]) {
+                overlay.style.display = 'flex';
+                return;
+            }
+            overlay.style.display = 'none';
             
             let adminEls = document.querySelectorAll('.admin-only');
             adminEls.forEach(el => {
@@ -358,6 +296,7 @@
 
             if (currentUser.role === 'admin') {
                 document.getElementById('adminBottomMenu').style.display = 'flex';
+                renderUsersList();
             }
 
             let container = document.getElementById('listContainer');
@@ -379,7 +318,7 @@
         }
 
         window.onload = () => {
-            initApp();
+            render();
         };
     </script>
 </body>
