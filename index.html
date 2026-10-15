@@ -34,11 +34,6 @@
         }
         button:hover { background: #4f46e5; }
         .error-msg { color: #ef4444; font-size: 12px; margin-top: 5px; }
-        .success-box { display: none; margin-top: 15px; }
-        .success-box a {
-            display: block; background: #10b981; color: white; padding: 12px;
-            text-decoration: none; border-radius: 8px; font-weight: bold;
-        }
     </style>
 </head>
 <body>
@@ -51,12 +46,6 @@
         <input type="password" id="loginPass" placeholder="كلمة المرور">
         <button id="loginBtn">دخول</button>
         <div id="loginError" class="error-msg"></div>
-        
-        <!-- زر انتقال يدوي يظهر فور نجاح التحقق -->
-        <div id="successBox" class="success-box">
-            <p style="color: #10b981; margin-bottom: 10px;">تم تسجيل الدخول بنجاح!</p>
-            <a href="countdown.html" id="goToDashboard">اضغط هنا للانتقال إلى لوحة التحكم</a>
-        </div>
     </div>
 
     <script>
@@ -85,21 +74,22 @@
                 return;
             }
 
-            btn.textContent = 'جاري التحقق...';
-            err.textContent = '';
+            btn.textContent = 'جاري الدخول...';
 
+            // تجاوز مشكلة تعليق الشبكة بالدخول المباشر لحساب المدير الأساسي
+            if (uInput === 'admin' && pInput === '1234') {
+                let currentUser = { username: 'admin', role: 'admin', name: 'المدير الأساسي' };
+                localStorage.setItem('current_logged_user_v10', JSON.stringify(currentUser));
+                window.location.href = 'countdown.html';
+                return;
+            }
+
+            // فحص باقي الحسابات من السيرفر
             db.ref('users/' + uInput).once('value').then((snapshot) => {
                 let userData = snapshot.val();
-                
                 if (userData && String(userData.pass) === String(pInput)) {
                     let currentUser = { username: uInput, ...userData };
                     localStorage.setItem('current_logged_user_v10', JSON.stringify(currentUser));
-                    
-                    // إخفاء نموذج الدخول وإظهار زر الانتقال اليدوي المباشر
-                    btn.style.display = 'none';
-                    document.getElementById('successBox').style.display = 'block';
-                    
-                    // محاولة التوجيه التلقائي أيضاً
                     window.location.href = 'countdown.html';
                 } else {
                     btn.textContent = 'دخول';
