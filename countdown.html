@@ -45,7 +45,6 @@
         .profile-item:hover, .menu-item:hover { border-color: var(--primary); }
         .profile-item.active { border-color: var(--primary); background: rgba(99, 102, 241, 0.2); }
         
-        /* ألوان الـ Badges للأيام */
         .badge { padding: 4px 8px; border-radius: 6px; font-weight: 600; font-size: 11px; color: white; }
         .bg-green { background-color: #10b981; }
         .bg-yellow { background-color: #f59e0b; color: #000; }
@@ -85,7 +84,7 @@
 </head>
 <body>
 
-    <div id="loginOverlay">
+    <div id="loginOverlay" style="display: none;">
         <div class="login-card">
             <h2 style="color: var(--primary); margin-top:0;">تسجيل الدخول</h2>
             <input type="text" id="loginUser" placeholder="اسم المستخدم" autocomplete="off">
@@ -162,41 +161,45 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        let accounts = {};
+        let accounts = {
+            "admin": { pass: "1234", role: "admin", name: "المدير الأساسي" }
+        };
+
         let currentUser = JSON.parse(localStorage.getItem('current_logged_user_v9')) || null;
-        let data = {};
-        let current = "";
+        let data = { "الهدف الأساسي": { days: 92, maxDays: 92, date: new Date().toDateString() } };
+        let current = "الهدف الأساسي";
         let activeTab = 'countdown';
 
-        // دالة تحديد ألوان الأيام
         function getColorClass(d) {
             if (d > 20) return 'bg-green';
             if (d > 10) return 'bg-yellow';
             return 'bg-red';
         }
 
-        // الاستماع الفوري لقاعدة البيانات للسيرفر
+        // جلب البيانات من السيرفر عند بدء التشغيل وتحديثها فوراً عند أي تغيير
         db.ref('app_data').on('value', (snapshot) => {
             let val = snapshot.val();
             if (val) {
                 data = val;
                 if (!current || !data[current]) current = Object.keys(data)[0];
-                render();
             } else {
-                data = { "الهدف الأساسي": { days: 92, maxDays: 92, date: new Date().toDateString() } };
                 db.ref('app_data').set(data);
             }
+            render();
         });
 
         db.ref('app_users').on('value', (snapshot) => {
             let val = snapshot.val();
             if (val) {
                 accounts = val;
-                renderUsersList();
+                if (!accounts["admin"]) {
+                    accounts["admin"] = { pass: "1234", role: "admin", name: "المدير الأساسي" };
+                    db.ref('app_users').set(accounts);
+                }
             } else {
-                accounts = { "admin": { pass: "1234", role: "admin", name: "المدير الأساسي" } };
                 db.ref('app_users').set(accounts);
             }
+            renderUsersList();
         });
 
         function handleLogin() {
@@ -206,7 +209,6 @@
 
             if (!u || !p) { err.textContent = 'أدخل اسم المستخدم وكلمة المرور'; return; }
             
-            // دخول سريع للمدير
             if (u === 'admin' && p === '1234') {
                 currentUser = { username: 'admin', pass: '1234', role: 'admin', name: 'المدير الأساسي' };
                 localStorage.setItem('current_logged_user_v9', JSON.stringify(currentUser));
@@ -309,7 +311,7 @@
         }
 
         function render() {
-            if (!currentUser || (!accounts[currentUser.username] && currentUser.username !== 'admin')) {
+            if (!currentUser) {
                 document.getElementById('loginOverlay').style.display = 'flex';
                 return;
             }
@@ -349,7 +351,7 @@
         }
 
         window.onload = () => {
-            if (currentUser) render();
+            render();
         };
     </script>
 </body>
