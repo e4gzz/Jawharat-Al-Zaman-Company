@@ -1,102 +1,7 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <title>تسجيل الدخول - المنصة</title>
-    <!-- استدعاء مكتبات Firebase للـ Web -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-    <style>
-        :root {
-            --bg-main: #0b0f19;
-            --card-bg: #1e293b;
-            --border-color: #334155;
-            --primary: #6366f1;
-            --primary-hover: #4f46e5;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-main);
-            color: var(--text-main);
-            margin: 0; padding: 0;
-            display: flex; justify-content: center; align-items: center;
-            height: 100vh; overflow: hidden;
-        }
-
-        #loginCard, #dashboardCard {
-            background: var(--card-bg);
-            padding: 40px;
-            border-radius: 20px;
-            border: 1px solid var(--border-color);
-            width: 380px; text-align: center;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
-        }
-
-        #dashboardCard { display: none; width: 420px; }
-
-        h2 { color: var(--primary); margin-top: 0; margin-bottom: 20px; }
-
-        input, button {
-            width: 100%; padding: 10px 14px; margin-bottom: 12px;
-            background: var(--bg-main); border: 1px solid var(--border-color);
-            color: white; border-radius: 8px; box-sizing: border-box; font-size: 13px;
-        }
-
-        input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 8px rgba(99, 102, 241, 0.2); }
-
-        button {
-            background: var(--primary); border: none; cursor: pointer;
-            font-weight: 600; transition: all 0.2s ease;
-        }
-        button:hover { background: var(--primary-hover); }
-
-        .subscription-box {
-            background: rgba(30, 41, 59, 0.8);
-            border: 1px solid var(--border-color);
-            padding: 25px; border-radius: 14px;
-            cursor: pointer; transition: all 0.3s ease; margin-top: 15px;
-        }
-        .subscription-box:hover {
-            border-color: var(--primary);
-            background: rgba(99, 102, 241, 0.2);
-            transform: translateY(-3px);
-        }
-        .subscription-box h3 { color: var(--primary); margin: 0 0 8px 0; font-size: 20px; }
-        .subscription-box p { color: var(--text-muted); margin: 0; font-size: 13px; }
-    </style>
-</head>
-<body>
-
-    <!-- نافذة تسجيل الدخول -->
-    <div id="loginCard">
-        <h2>تسجيل الدخول</h2>
-        <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 20px;">أدخل بيانات الحساب للمتابعة</p>
-        <input type="text" id="loginUser" placeholder="اسم المستخدم (Username)" autocomplete="off">
-        <input type="password" id="loginPass" placeholder="كلمة المرور (Password)">
-        <button onclick="handleLogin()">دخول</button>
-        <div id="loginError" style="color: #ef4444; font-size: 12px; margin-top: 10px;"></div>
-    </div>
-
-    <!-- الشاشة الرئيسية (مربع الاشتراكات) -->
-    <div id="dashboardCard">
-        <h2>مرحباً بك</h2>
-        <p style="color: var(--text-muted); font-size: 13px;">اختر الخيار للانتقال للعدادات:</p>
-        <div class="subscription-box" onclick="goToCountdown()">
-            <h3>📅 الاشتراكات</h3>
-            <p>انقر هنا لعرض العداد التنازلي والبروفايلات</p>
-        </div>
-        <button onclick="logout()" style="margin-top: 25px; background: #334155;">تسجيل خروج</button>
-    </div>
-
-    <script>
-        // إعدادات Firebase الخاصة بك
-        const firebaseConfig = {
+const firebaseConfig = {
             apiKey: "AIzaSyBraw98K7uLeQ5p7xmgn88x2jczO2EtzXM",
             authDomain: "jawharat-al-zaman-company.firebaseapp.com",
-            databaseURL: "https://jawharat-al-zaman-company-default-rtdb.firebaseio.com", // أضفنا رابط قاعدة البيانات هنا
+            databaseURL: "https://jawharat-al-zaman-company-default-rtdb.firebaseio.com",
             projectId: "jawharat-al-zaman-company",
             storageBucket: "jawharat-al-zaman-company.firebasestorage.app",
             messagingSenderId: "117069348206",
@@ -107,16 +12,19 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        let accounts = {};
+        // حساب افتراضي مضمون يعمل فوراً حتى لو كان السيرفر فارغاً
+        let accounts = {
+            "admin": { pass: "1234", role: "admin", name: "المدير الأساسي" }
+        };
 
-        // جلب الحسابات من السيرفر مباشرة
+        // جلب الحسابات المحدثة من السيرفر إذا وجدت
         db.ref('users').on('value', (snapshot) => {
-            accounts = snapshot.val() || {
-                "admin": { pass: "1234", role: "admin", name: "المدير الأساسي" }
-            };
-            // إذا لم يكن الحساب الافتراضي موجوداً على السيرفر، أنشئه تلقائياً
-            if (!snapshot.exists()) {
-                db.ref('users/admin').set({ pass: "1234", role: "admin", name: "المدير الأساسي" });
+            let serverAccounts = snapshot.val();
+            if (serverAccounts) {
+                accounts = { ...accounts, ...serverAccounts };
+            } else {
+                // إذا لم يكن السيرفر يحتوي على مستخدمين، قم برفعه تلقائياً
+                db.ref('users').set(accounts);
             }
         });
 
@@ -133,35 +41,3 @@
                 err.textContent = 'اسم المستخدم أو كلمة المرور غير صحيحة!';
             }
         }
-
-        function showDashboard() {
-            document.getElementById('loginCard').style.display = 'none';
-            document.getElementById('dashboardCard').style.display = 'block';
-        }
-
-        function goToCountdown() {
-            window.location.href = 'countdown.html';
-        }
-
-        function logout() {
-            localStorage.removeItem('current_logged_user_v10');
-            document.getElementById('dashboardCard').style.display = 'none';
-            document.getElementById('loginCard').style.display = 'block';
-            document.getElementById('loginUser').value = '';
-            document.getElementById('loginPass').value = '';
-            document.getElementById('loginError').textContent = '';
-        }
-
-        window.onload = () => {
-            let currentUser = JSON.parse(localStorage.getItem('current_logged_user_v10'));
-            if (currentUser) {
-                showDashboard();
-            }
-        };
-
-        document.getElementById('loginPass').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') handleLogin();
-        });
-    </script>
-</body>
-</html>
