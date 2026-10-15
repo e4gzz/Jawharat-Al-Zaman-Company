@@ -1,4 +1,56 @@
-const firebaseConfig = {
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>تسجيل الدخول - المنصة</title>
+    <!-- استدعاء مكتبات Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0b0f19;
+            color: #f8fafc;
+            margin: 0; display: flex;
+            justify-content: center; align-items: center;
+            height: 100vh;
+        }
+        .login-card {
+            background: #1e293b; padding: 30px;
+            border-radius: 20px; border: 1px solid #334155;
+            text-align: center; width: 380px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+        h2 { color: #6366f1; margin-top: 0; margin-bottom: 5px; }
+        p { color: #94a3b8; font-size: 13px; margin-bottom: 25px; }
+        input, button {
+            width: 100%; padding: 12px 14px; margin-bottom: 12px;
+            background: #0b0f19; border: 1px solid #334155;
+            color: white; border-radius: 8px; box-sizing: border-box; font-size: 14px;
+        }
+        input:focus { outline: none; border-color: #6366f1; }
+        button {
+            background: #6366f1; border: none; cursor: pointer;
+            font-weight: 600; transition: background 0.2s;
+        }
+        button:hover { background: #4f46e5; }
+        .error-msg { color: #ef4444; font-size: 12px; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+    <div class="login-card">
+        <h2>تسجيل الدخول</h2>
+        <p>أدخل بيانات الحساب للمتابعة</p>
+        
+        <input type="text" id="loginUser" placeholder="اسم المستخدم" autocomplete="off">
+        <input type="password" id="loginPass" placeholder="كلمة المرور">
+        <button onclick="handleLogin()">دخول</button>
+        <div id="loginError" class="error-msg"></div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
             apiKey: "AIzaSyBraw98K7uLeQ5p7xmgn88x2jczO2EtzXM",
             authDomain: "jawharat-al-zaman-company.firebaseapp.com",
             databaseURL: "https://jawharat-al-zaman-company-default-rtdb.firebaseio.com",
@@ -12,32 +64,32 @@ const firebaseConfig = {
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // حساب افتراضي مضمون يعمل فوراً حتى لو كان السيرفر فارغاً
-        let accounts = {
-            "admin": { pass: "1234", role: "admin", name: "المدير الأساسي" }
-        };
-
-        // جلب الحسابات المحدثة من السيرفر إذا وجدت
-        db.ref('users').on('value', (snapshot) => {
-            let serverAccounts = snapshot.val();
-            if (serverAccounts) {
-                accounts = { ...accounts, ...serverAccounts };
-            } else {
-                // إذا لم يكن السيرفر يحتوي على مستخدمين، قم برفعه تلقائياً
-                db.ref('users').set(accounts);
-            }
-        });
-
         function handleLogin() {
             let uInput = document.getElementById('loginUser').value.trim();
             let pInput = document.getElementById('loginPass').value.trim();
             let err = document.getElementById('loginError');
 
-            if (accounts[uInput] && accounts[uInput].pass === pInput) {
-                let currentUser = { username: uInput, ...accounts[uInput] };
-                localStorage.setItem('current_logged_user_v10', JSON.stringify(currentUser));
-                showDashboard();
-            } else {
-                err.textContent = 'اسم المستخدم أو كلمة المرور غير صحيحة!';
+            if (!uInput || !pInput) {
+                err.textContent = 'الرجاء إدخال اسم المستخدم وكلمة المرور';
+                return;
             }
+
+            // فحص الحساب مباشرة من قاعدة بيانات Firebase التي أنشأتها
+            db.ref('users/' + uInput).once('value').then((snapshot) => {
+                let userData = snapshot.val();
+                
+                if (userData && userData.pass === pInput) {
+                    let currentUser = { username: uInput, ...userData };
+                    localStorage.setItem('current_logged_user_v10', JSON.stringify(currentUser));
+                    window.location.href = 'countdown.html';
+                } else {
+                    err.textContent = 'اسم المستخدم أو كلمة المرور غير صحيحة!';
+                }
+            }).catch((error) => {
+                err.textContent = 'خطأ في الاتصال بقاعدة البيانات!';
+                console.error(error);
+            });
         }
+    </script>
+</body>
+</html>
