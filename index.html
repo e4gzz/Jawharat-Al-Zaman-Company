@@ -33,9 +33,13 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;color:#f8fafc;margi
 .main{flex:1;display:flex;justify-content:center;align-items:center;padding:15px;overflow-y:auto;box-sizing:border-box}
 .card{background:var(--glass);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);padding:28px 22px;border-radius:24px;border:1px solid var(--gbd);box-shadow:0 25px 60px rgba(0,0,0,.45);text-align:center;width:100%;max-width:480px;box-sizing:border-box;animation:in .5s ease both}
 .big{font-size:60px;font-weight:800;color:#10b981;margin:10px 0;text-shadow:0 0 30px rgba(16,185,129,.35)}
+.note-view{display:none;margin-top:14px;text-align:right;background:rgba(11,15,25,.45);border:1px solid var(--gbd);padding:12px 14px;border-radius:16px}
+.note-label{font-size:12px;color:var(--mut);margin-bottom:6px}
+.note-text{font-size:14px;line-height:1.7;color:#e2e8f0;white-space:pre-wrap;word-break:break-word}
 .admin-box{display:none;margin-top:18px;text-align:right;background:rgba(11,15,25,.45);border:1px solid var(--gbd);padding:14px;border-radius:16px}
-input,select,button{width:100%;padding:12px 14px;margin-bottom:10px;background:rgba(11,15,25,.7);border:1px solid var(--bd);color:#fff;border-radius:12px;box-sizing:border-box;font-size:14px;transition:border-color .2s,box-shadow .2s,transform .15s}
-input:focus,select:focus{outline:none;border-color:var(--pr);box-shadow:0 0 0 3px rgba(99,102,241,.25)}
+input,select,button,textarea{width:100%;padding:12px 14px;margin-bottom:10px;background:rgba(11,15,25,.7);border:1px solid var(--bd);color:#fff;border-radius:12px;box-sizing:border-box;font-size:14px;font-family:inherit;transition:border-color .2s,box-shadow .2s,transform .15s}
+textarea{min-height:80px;resize:vertical;line-height:1.6}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--pr);box-shadow:0 0 0 3px rgba(99,102,241,.25)}
 option{background:#0b0f19}
 button{background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;cursor:pointer;font-weight:600;box-shadow:0 8px 22px rgba(99,102,241,.35)}
 button:hover{background:linear-gradient(135deg,#4f46e5,#7c3aed);transform:translateY(-1px);box-shadow:0 12px 28px rgba(99,102,241,.45)}
@@ -47,7 +51,7 @@ body{flex-direction:column;height:auto;min-height:100vh;min-height:100dvh;overfl
 .main{order:1;flex:none;padding:12px;align-items:flex-start;overflow:visible}
 .sidebar{order:2;flex:none;width:100%;overflow-y:visible;padding:15px;border-left:none;border-top:1px solid var(--gbd)}
 .plist{flex:none;max-height:220px}.card{padding:22px 16px}.big{font-size:45px}
-input,select,button{font-size:16px}.lcard{padding:30px 20px 22px}}
+input,select,button,textarea{font-size:16px}.lcard{padding:30px 20px 22px}}
 </style>
 </head>
 <body>
@@ -76,10 +80,19 @@ input,select,button{font-size:16px}.lcard{padding:30px 20px 22px}}
 <h2 id="title" style="color:var(--prl);margin-top:0">جاري التحميل...</h2>
 <div style="color:var(--mut);font-size:14px">الأيام المتبقية</div>
 <div class="big" id="days">0</div>
+
+<div class="note-view" id="noteView">
+<div class="note-label">📝 ملاحظات</div>
+<div class="note-text" id="noteText"></div>
+</div>
+
 <div id="adminBox" class="admin-box">
 <label style="font-size:12px;color:var(--mut);display:block;margin-bottom:6px">تعديل الأيام:</label>
 <div style="display:flex;gap:8px"><input type="number" id="dIn" min="1" max="365" style="margin-bottom:0"><button data-act="setDays" style="width:100px;margin-bottom:0">تعيين</button></div>
-<div style="display:flex;gap:8px;margin-top:10px"><button class="sec" data-act="rename" style="margin-bottom:0">إعادة تسمية</button><button class="dng" data-act="delP" style="margin-bottom:0">حذف</button></div>
+<label style="font-size:12px;color:var(--mut);display:block;margin:12px 0 6px">الملاحظات:</label>
+<textarea id="noteIn" placeholder="اكتب ملاحظاتك هنا..."></textarea>
+<button class="sec" data-act="saveNote">حفظ الملاحظات</button>
+<div style="display:flex;gap:8px"><button class="sec" data-act="rename" style="margin-bottom:0">إعادة تسمية</button><button class="dng" data-act="delP" style="margin-bottom:0">حذف</button></div>
 </div>
 </div>
 
@@ -87,6 +100,7 @@ input,select,button{font-size:16px}.lcard{padding:30px 20px 22px}}
 <h2 style="color:var(--prl);text-align:center;margin-top:0">إنشاء اشتراك جديد</h2>
 <input type="text" id="nName" placeholder="اسم الاشتراك..." autocomplete="off">
 <input type="number" id="nDays" min="1" max="365" value="92">
+<textarea id="nNote" placeholder="ملاحظات (اختياري)..."></textarea>
 <button data-act="create">إنشاء وحفظ</button>
 <button class="sec" data-act="view" data-tab="countdown">إلغاء</button>
 </div>
@@ -147,7 +161,7 @@ onSnapshot(usersRef, snap => {
 
 onSnapshot(profilesRef, snap => {
   if (snap.exists()) data = snap.data().data;
-  else { data = { 'الهدف الأساسي': { days: 92, maxDays: 92, start: today() } }; saveData(); }
+  else { data = { 'الهدف الأساسي': { days: 92, maxDays: 92, start: today(), note: '' } }; saveData(); }
   let changed = false;
   for (const n in data) if (!data[n].start) { data[n].start = today(); changed = true; }
   if (changed) saveData();
@@ -196,7 +210,17 @@ function render() {
 
   const now = new Date();
   $('title').innerHTML = `${now.toLocaleDateString('ar-IQ', { weekday: 'long' })} ${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}<div style="font-size:13px;color:var(--mut);font-weight:400;margin-top:4px">آخر تحديث للصفحة: ${loadTime}</div>`;
-  if (data[current]) { $('days').textContent = left(data[current]); $('dIn').value = data[current].maxDays ?? data[current].days; }
+
+  const p = data[current];
+  if (p) {
+    $('days').textContent = left(p);
+    // الملاحظات تظهر داخل البطاقة الرئيسية تحت الأيام المتبقية
+    const note = (p.note || '').trim();
+    $('noteText').textContent = note;
+    $('noteView').style.display = note ? 'block' : 'none';
+    if (document.activeElement !== $('dIn')) $('dIn').value = p.maxDays ?? p.days;
+    if (document.activeElement !== $('noteIn')) $('noteIn').value = p.note || '';
+  }
 }
 
 const act = {
@@ -207,8 +231,14 @@ const act = {
   sel(el) { current = el.dataset.name; tab = 'countdown'; render(); },
   setDays() {
     const v = parseInt($('dIn').value); if (isNaN(v)) return;
-    data[current] = { days: v, maxDays: v, start: today() };
+    data[current] = { ...data[current], days: v, maxDays: v, start: today() };
     saveData(); render();
+  },
+  saveNote(el) {
+    data[current].note = $('noteIn').value.trim();
+    saveData(); render();
+    el.textContent = 'تم الحفظ ✓';
+    setTimeout(() => { el.textContent = 'حفظ الملاحظات'; }, 1500);
   },
   rename() {
     let n = prompt('الاسم الجديد للاشتراك:', current);
@@ -225,8 +255,8 @@ const act = {
     const n = $('nName').value.trim(), d = parseInt($('nDays').value);
     if (!n || isNaN(d)) return alert('أدخل بيانات صحيحة');
     if (data[n]) return alert('الاشتراك موجود مسبقاً');
-    data[n] = { days: d, maxDays: d, start: today() };
-    current = n; $('nName').value = ''; tab = 'countdown';
+    data[n] = { days: d, maxDays: d, start: today(), note: $('nNote').value.trim() };
+    current = n; $('nName').value = ''; $('nNote').value = ''; tab = 'countdown';
     saveData(); render();
   },
   addUser() {
