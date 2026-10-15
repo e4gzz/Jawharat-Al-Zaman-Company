@@ -2,98 +2,352 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>تسجيل الدخول - المنصة</title>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>العداد التنازلي للبروفايلات</title>
     <style>
+        :root {
+            --bg-main: #0b0f19;
+            --sidebar-bg: #111827;
+            --card-bg: #1e293b;
+            --border-color: #334155;
+            --primary: #6366f1;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #0b0f19; color: #f8fafc;
-            margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh;
+            background-color: var(--bg-main); color: var(--text-main);
+            margin: 0; padding: 0; display: flex; height: 100vh; flex-direction: row; overflow: hidden;
+            box-sizing: border-box;
+        }
+        #loginOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(11, 15, 25, 0.98); display: flex; justify-content: center; align-items: center; z-index: 9999;
+            padding: 15px; box-sizing: border-box;
         }
         .login-card {
-            background: #1e293b; padding: 30px; border-radius: 20px;
-            border: 1px solid #334155; text-align: center; width: 380px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            background: var(--card-bg); padding: 30px 20px; border-radius: 20px;
+            border: 1px solid var(--border-color); width: 100%; max-width: 380px; text-align: center;
         }
-        h2 { color: #6366f1; margin-top: 0; margin-bottom: 5px; }
-        p { color: #94a3b8; font-size: 13px; margin-bottom: 25px; }
-        input, button {
-            width: 100%; padding: 12px 14px; margin-bottom: 12px;
-            background: #0b0f19; border: 1px solid #334155;
-            color: white; border-radius: 8px; box-sizing: border-box; font-size: 14px;
+        .sidebar {
+            width: 280px; background: var(--sidebar-bg); border-left: 1px solid var(--border-color);
+            padding: 20px; display: flex; flex-direction: column; box-sizing: border-box; flex-shrink: 0;
+            overflow-y: auto;
         }
-        input:focus { outline: none; border-color: #6366f1; }
-        button { background: #6366f1; border: none; cursor: pointer; font-weight: 600; }
+        .profiles-list { flex: 1; overflow-y: auto; margin-bottom: 10px; }
+        .profile-item, .user-item, .menu-item {
+            padding: 12px 14px; background: rgba(30, 41, 59, 0.6); border: 1px solid var(--border-color);
+            border-radius: 10px; margin-bottom: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+            font-size: 14px; transition: all 0.2s;
+        }
+        .profile-item:hover, .menu-item:hover { border-color: var(--primary); }
+        .profile-item.active { border-color: var(--primary); background: rgba(99, 102, 241, 0.2); }
+
+        .badge { padding: 4px 8px; border-radius: 6px; font-weight: 600; font-size: 11px; color: white; }
+        .bg-green { background-color: #10b981; }
+        .bg-yellow { background-color: #f59e0b; color: #000; }
+        .bg-red { background-color: #ef4444; }
+
+        .main-container {
+            flex: 1; display: flex; justify-content: center; align-items: center; padding: 15px;
+            background: radial-gradient(circle at center, #131c31 0%, #0b0f19 100%); overflow-y: auto;
+            box-sizing: border-box;
+        }
+        .card {
+            background: var(--card-bg); padding: 25px 20px; border-radius: 20px;
+            border: 1px solid var(--border-color); text-align: center; width: 100%; max-width: 480px;
+            box-sizing: border-box;
+        }
+        .big-number { font-size: 60px; font-weight: 800; color: #10b981; margin: 10px 0; }
+        input, select, button {
+            width: 100%; padding: 12px 14px; margin-bottom: 10px;
+            background: var(--bg-main); border: 1px solid var(--border-color); color: white; border-radius: 8px; box-sizing: border-box; font-size: 14px;
+        }
+        input:focus, select:focus { outline: none; border-color: var(--primary); }
+        button { background: var(--primary); border: none; cursor: pointer; font-weight: 600; }
         button:hover { background: #4f46e5; }
-        .error-msg { color: #ef4444; font-size: 12px; margin-top: 5px; }
+        .btn-secondary { background: #334155; }
+        .btn-secondary:hover { background: #475569; }
+        .btn-danger { background: #ef4444; }
+        .btn-danger:hover { background: #dc2626; }
+        .admin-only { display: none; }
+
+        @media (max-width: 768px) {
+            body { flex-direction: column; height: auto; min-height: 100vh; overflow-y: auto; }
+            .sidebar { width: 100%; max-height: 250px; border-left: none; border-bottom: 1px solid var(--border-color); order: 2; }
+            .main-container { order: 1; min-height: 350px; }
+            .big-number { font-size: 45px; }
+        }
     </style>
 </head>
 <body>
 
-    <div class="login-card">
-        <h2>تسجيل الدخول</h2>
-        <p>أدخل بيانات الحساب للمتابعة</p>
-        
-        <input type="text" id="loginUser" placeholder="اسم المستخدم" autocomplete="off">
-        <input type="password" id="loginPass" placeholder="كلمة المرور">
-        <button id="loginBtn" onclick="handleLogin()">دخول</button>
-        <div id="loginError" class="error-msg"></div>
+    <div id="loginOverlay">
+        <div class="login-card">
+            <h2 style="color: var(--primary); margin-top:0;">تسجيل الدخول</h2>
+            <input type="text" id="loginUser" placeholder="اسم المستخدم" autocomplete="off">
+            <input type="password" id="loginPass" placeholder="كلمة المرور">
+            <button data-act="login" style="margin-top: 5px;">دخول</button>
+            <div id="loginError" style="color: #ef4444; font-size: 12px; margin-top: 10px;"></div>
+        </div>
     </div>
 
-    <script>
+    <div class="sidebar">
+        <h3 style="color: var(--primary); text-align: center; margin-top:0;">البروفايلات</h3>
+        <div class="profiles-list" id="listContainer"></div>
+        <div id="adminBottomMenu" class="admin-only" style="border-top: 1px solid var(--border-color); padding-top: 10px; margin-top: auto; flex-direction: column; gap: 6px;">
+            <div class="menu-item" data-act="view" data-tab="create"><span>➕ إنشاء بروفايل جديد</span></div>
+            <div class="menu-item" data-act="view" data-tab="settings"><span>⚙️ الإعدادات والصلاحيات</span></div>
+        </div>
+        <button class="btn-secondary" data-act="logout" style="margin-top: 8px; margin-bottom:0;">تسجيل خروج</button>
+    </div>
+
+    <div class="main-container">
+        <div class="card" id="countdownCardView">
+            <h2 id="activeTitle" style="color: var(--primary); margin-top:0;">جاري التحميل...</h2>
+            <div style="color: var(--text-muted); font-size: 14px;">الأيام المتبقية</div>
+            <div class="big-number" id="daysDisplay">0</div>
+
+            <div id="adminSettingsSection" class="admin-only" style="margin-top: 15px; text-align: right; background: rgba(15, 23, 42, 0.5); padding: 12px; border-radius: 10px;">
+                <label style="font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 6px;">تعديل الأيام:</label>
+                <div style="display: flex; gap: 8px;">
+                    <input type="number" id="daysInput" min="1" max="365" value="92" style="margin-bottom:0;">
+                    <button data-act="setDays" style="width: 100px; margin-bottom:0;">تعيين</button>
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 10px;">
+                    <button class="btn-secondary" data-act="rename">إعادة تسمية</button>
+                    <button class="btn-danger" data-act="deleteProfile">حذف</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card admin-only" id="createPanelView" style="text-align: right;">
+            <h2 style="color: var(--primary); text-align: center; margin-top:0;">إنشاء بروفايل جديد</h2>
+            <input type="text" id="newProfileNameInput" placeholder="اسم البروفايل..." autocomplete="off">
+            <input type="number" id="newProfileDaysInput" min="1" max="365" value="92">
+            <button data-act="createProfile">إنشاء وحفظ</button>
+            <button class="btn-secondary" data-act="view" data-tab="countdown" style="margin-top: 5px;">إلغاء</button>
+        </div>
+
+        <div class="card admin-only" id="settingsPanelView" style="text-align: right;">
+            <h2 style="color: var(--primary); text-align: center; margin-top:0;">إدارة المستخدمين</h2>
+            <input type="text" id="newUsername" placeholder="يوزر جديد" autocomplete="off">
+            <input type="password" id="newUserPass" placeholder="كلمة المرور">
+            <select id="newUserRole">
+                <option value="viewer">مُشاهد (قراءة فقط)</option>
+                <option value="admin">مدير (تحكم كامل)</option>
+            </select>
+            <button data-act="createUser">حفظ المستخدم</button>
+            <div id="usersListContainer" style="max-height: 120px; overflow-y: auto; margin-top: 10px;"></div>
+            <button class="btn-secondary" data-act="view" data-tab="countdown" style="margin-top: 10px;">العودة</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
         const firebaseConfig = {
             apiKey: "AIzaSyBraw98K7uLeQ5p7xmgn88x2jczO2EtzXM",
             authDomain: "jawharat-al-zaman-company.firebaseapp.com",
-            databaseURL: "https://jawharat-al-zaman-company-default-rtdb.firebaseio.com",
             projectId: "jawharat-al-zaman-company",
             storageBucket: "jawharat-al-zaman-company.firebasestorage.app",
             messagingSenderId: "117069348206",
-            appId: "1:117069348206:web:1d8e3c9c365557d02b557f",
-            measurementId: "G-DPKEELR14J"
+            appId: "1:117069348206:web:1d8e3c9c365557d02b557f"
         };
 
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+        const db = getFirestore(initializeApp(firebaseConfig));
+        const usersRef = doc(db, 'app', 'users');
+        const profilesRef = doc(db, 'app', 'profiles');
+
+        const $ = id => document.getElementById(id);
+        const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+        let accounts = null;   // تجي من Firestore
+        let data = null;       // تجي من Firestore
+        let currentUser = null;
+        try { currentUser = JSON.parse(localStorage.getItem('current_logged_user_v11')); } catch (e) {}
+        let current = null;
+        let activeTab = 'countdown';
+
+        const saveData = () => setDoc(profilesRef, { data }).catch(showError);
+        const saveUsers = () => setDoc(usersRef, { accounts }).catch(showError);
+
+        function showError(err) {
+            console.error(err);
+            $('loginError').textContent = 'خطأ بالاتصال بقاعدة البيانات: ' + (err.code || err.message);
+        }
+
+        // مزامنة مباشرة مع Firestore
+        onSnapshot(usersRef, snap => {
+            if (snap.exists()) accounts = snap.data().accounts;
+            else { accounts = { admin: { pass: "1234", role: "admin", name: "المدير الأساسي" } }; saveUsers(); }
+            render();
+        }, showError);
+
+        onSnapshot(profilesRef, snap => {
+            if (snap.exists()) data = snap.data().data;
+            else { data = { "الهدف الأساسي": { days: 92, maxDays: 92 } }; saveData(); }
+            if (!current || !data[current]) current = Object.keys(data)[0];
+            render();
+        }, showError);
+
+        function getColorClass(d) {
+            if (d > 20) return 'bg-green';
+            if (d > 10) return 'bg-yellow';
+            return 'bg-red';
+        }
 
         function handleLogin() {
-            let uInput = document.getElementById('loginUser').value.trim();
-            let pInput = document.getElementById('loginPass').value.trim();
-            let err = document.getElementById('loginError');
-            let btn = document.getElementById('loginBtn');
-
-            if (!uInput || !pInput) {
-                err.textContent = 'الرجاء إدخال اسم المستخدم وكلمة المرور';
-                return;
+            const u = $('loginUser').value.trim();
+            const p = $('loginPass').value.trim();
+            const err = $('loginError');
+            if (!accounts) { err.textContent = 'جاري الاتصال بقاعدة البيانات، حاول بعد ثواني...'; return; }
+            if (!u || !p) { err.textContent = 'أدخل اسم المستخدم وكلمة المرور'; return; }
+            if (accounts[u] && String(accounts[u].pass) === String(p)) {
+                currentUser = { username: u };
+                localStorage.setItem('current_logged_user_v11', JSON.stringify(currentUser));
+                err.textContent = '';
+                render();
+            } else {
+                err.textContent = 'اسم المستخدم أو كلمة المرور غير صحيحة!';
             }
-
-            btn.textContent = 'جاري التحقق...';
-            err.textContent = '';
-
-            // حساب الادمن الافتراضي للدخول الفوري السريع
-            if (uInput === 'admin' && pInput === '1234') {
-                let currentUser = { username: 'admin', role: 'admin', name: 'المدير الأساسي' };
-                localStorage.setItem('current_logged_user_v10', JSON.stringify(currentUser));
-                window.location.href = 'countdown.html';
-                return;
-            }
-
-            // فحص باقي الحسابات من السيرفر
-            db.ref('users/' + uInput).once('value').then((snapshot) => {
-                let userData = snapshot.val();
-                if (userData && String(userData.pass) === String(pInput)) {
-                    let currentUser = { username: uInput, ...userData };
-                    localStorage.setItem('current_logged_user_v10', JSON.stringify(currentUser));
-                    window.location.href = 'countdown.html';
-                } else {
-                    btn.textContent = 'دخول';
-                    err.textContent = 'اسم المستخدم أو كلمة المرور غير صحيحة!';
-                }
-            }).catch((error) => {
-                btn.textContent = 'دخول';
-                err.textContent = 'خطأ في الاتصال بالشبكة';
-            });
         }
+
+        function logout() {
+            localStorage.removeItem('current_logged_user_v11');
+            currentUser = null;
+            activeTab = 'countdown';
+            render();
+        }
+
+        function createProfile() {
+            const name = $('newProfileNameInput').value.trim();
+            const days = parseInt($('newProfileDaysInput').value);
+            if (!name || isNaN(days)) return alert('أدخل بيانات صحيحة');
+            if (data[name]) return alert('البروفايل موجود مسبقاً');
+            data[name] = { days, maxDays: days };
+            current = name;
+            saveData();
+            $('newProfileNameInput').value = '';
+            activeTab = 'countdown';
+            render();
+        }
+
+        function createUser() {
+            const u = $('newUsername').value.trim();
+            const p = $('newUserPass').value.trim();
+            const role = $('newUserRole').value;
+            if (!u || !p) return alert('أدخل اليوزر والباسورد');
+            if (accounts[u]) return alert('المستخدم موجود مسبقاً!');
+            accounts[u] = { pass: p, role, name: u };
+            saveUsers();
+            $('newUsername').value = '';
+            $('newUserPass').value = '';
+            alert('تم حفظ المستخدم بنجاح!');
+            render();
+        }
+
+        function deleteUser(uname) {
+            if (uname === 'admin') return alert('لا يمكن حذف المدير الرئيسي');
+            if (confirm(`حذف المستخدم ${uname}؟`)) {
+                delete accounts[uname];
+                saveUsers();
+                render();
+            }
+        }
+
+        function setDays() {
+            const val = parseInt($('daysInput').value);
+            if (isNaN(val)) return;
+            data[current].days = val;
+            data[current].maxDays = val;
+            saveData();
+            render();
+        }
+
+        function renameProfile() {
+            let newName = prompt("الاسم الجديد للبروفايل:", current);
+            if (!newName || !newName.trim()) return;
+            newName = newName.trim();
+            if (data[newName]) return alert('الاسم موجود مسبقاً');
+            data[newName] = data[current];
+            delete data[current];
+            current = newName;
+            saveData();
+            render();
+        }
+
+        function deleteProfile() {
+            if (Object.keys(data).length <= 1) return alert('لا يمكنك حذف البروفايل الوحيد');
+            if (confirm(`حذف بروفايل ${current}؟`)) {
+                delete data[current];
+                current = Object.keys(data)[0];
+                saveData();
+                render();
+            }
+        }
+
+        function render() {
+            if (!accounts || !data) return;
+            const overlay = $('loginOverlay');
+            if (!currentUser || !accounts[currentUser.username]) {
+                overlay.style.display = 'flex';
+                return;
+            }
+            overlay.style.display = 'none';
+
+            const isAdmin = accounts[currentUser.username].role === 'admin';
+            if (!isAdmin) activeTab = 'countdown';
+
+            $('countdownCardView').style.display = activeTab === 'countdown' ? 'block' : 'none';
+            $('createPanelView').style.display = isAdmin && activeTab === 'create' ? 'block' : 'none';
+            $('settingsPanelView').style.display = isAdmin && activeTab === 'settings' ? 'block' : 'none';
+            $('adminSettingsSection').style.display = isAdmin ? 'block' : 'none';
+            $('adminBottomMenu').style.display = isAdmin ? 'flex' : 'none';
+
+            // قائمة المستخدمين
+            if (isAdmin) {
+                $('usersListContainer').innerHTML = Object.keys(accounts).map(u =>
+                    `<div class="user-item"><span><b>${esc(u)}</b> (${esc(accounts[u].role)})</span> ` +
+                    (u !== 'admin'
+                        ? `<button data-act="deleteUser" data-name="${esc(u)}" style="width:auto; background:#ef4444; padding:2px 6px; margin:0;">حذف</button>`
+                        : '<span style="font-size:11px; color:var(--text-muted)">رئيسي</span>') +
+                    `</div>`).join('');
+            }
+
+            // قائمة البروفايلات
+            $('listContainer').innerHTML = Object.keys(data).map(name =>
+                `<div class="profile-item ${name === current && activeTab === 'countdown' ? 'active' : ''}" data-act="select" data-name="${esc(name)}">
+                    <span style="font-weight: 500;">${esc(name)}</span>
+                    <span class="badge ${getColorClass(data[name].days)}">${data[name].days} يوم</span>
+                </div>`).join('');
+
+            if (data[current]) {
+                $('activeTitle').textContent = current;
+                $('daysDisplay').textContent = data[current].days;
+                $('daysInput').value = data[current].maxDays || data[current].days;
+            }
+        }
+
+        // التعامل مع كل الأزرار من مكان واحد
+        document.addEventListener('click', e => {
+            const el = e.target.closest('[data-act]');
+            if (!el) return;
+            const name = el.dataset.name;
+            switch (el.dataset.act) {
+                case 'login': handleLogin(); break;
+                case 'logout': logout(); break;
+                case 'view': activeTab = el.dataset.tab; render(); break;
+                case 'select': current = name; activeTab = 'countdown'; render(); break;
+                case 'setDays': setDays(); break;
+                case 'rename': renameProfile(); break;
+                case 'deleteProfile': deleteProfile(); break;
+                case 'createProfile': createProfile(); break;
+                case 'createUser': createUser(); break;
+                case 'deleteUser': deleteUser(name); break;
+            }
+        });
     </script>
 </body>
 </html>
