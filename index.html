@@ -2,11 +2,13 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>العداد التنازلي للاشتراكات - لوحة التحكم الشاملة</title>
+    <title>تسجيل الدخول - المنصة</title>
+    <!-- استدعاء مكتبات Firebase للـ Web -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <style>
         :root {
             --bg-main: #0b0f19;
-            --sidebar-bg: #111827;
             --card-bg: #1e293b;
             --border-color: #334155;
             --primary: #6366f1;
@@ -19,605 +21,147 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--bg-main);
             color: var(--text-main);
-            margin: 0;
-            padding: 0;
-            display: flex;
-            height: 100vh;
-            flex-direction: row;
-            overflow: hidden;
+            margin: 0; padding: 0;
+            display: flex; justify-content: center; align-items: center;
+            height: 100vh; overflow: hidden;
         }
 
-        #loginOverlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(11, 15, 25, 0.98);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-        }
-
-        .login-card {
+        #loginCard, #dashboardCard {
             background: var(--card-bg);
             padding: 40px;
             border-radius: 20px;
             border: 1px solid var(--border-color);
-            width: 380px;
-            text-align: center;
+            width: 380px; text-align: center;
             box-shadow: 0 25px 50px rgba(0,0,0,0.5);
         }
 
-        .login-card h2 {
-            color: var(--primary);
-            margin-top: 0;
-            margin-bottom: 20px;
+        #dashboardCard { display: none; width: 420px; }
+
+        h2 { color: var(--primary); margin-top: 0; margin-bottom: 20px; }
+
+        input, button {
+            width: 100%; padding: 10px 14px; margin-bottom: 12px;
+            background: var(--bg-main); border: 1px solid var(--border-color);
+            color: white; border-radius: 8px; box-sizing: border-box; font-size: 13px;
         }
 
-        .sidebar {
-            width: 320px;
-            background: var(--sidebar-bg);
-            border-left: 1px solid var(--border-color);
-            padding: 24px;
-            display: flex;
-            flex-direction: column;
-            box-sizing: border-box;
-            flex-shrink: 0;
-            box-shadow: -5px 0 25px rgba(0, 0, 0, 0.3);
-        }
-
-        .sidebar h3 {
-            color: var(--primary);
-            text-align: center;
-            margin-top: 0;
-            margin-bottom: 20px;
-            font-size: 20px;
-        }
-
-        .profiles-list {
-            flex: 1;
-            overflow-y: auto;
-            margin-bottom: 10px;
-            padding-left: 5px;
-        }
-
-        .profiles-list::-webkit-scrollbar, .users-list::-webkit-scrollbar {
-            width: 6px;
-        }
-        .profiles-list::-webkit-scrollbar-thumb, .users-list::-webkit-scrollbar-thumb {
-            background: var(--border-color);
-            border-radius: 3px;
-        }
-
-        .profile-item, .user-item, .menu-item {
-            padding: 12px 14px;
-            background: rgba(30, 41, 59, 0.6);
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            margin-bottom: 8px;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.3s ease;
-        }
-
-        .profile-item:hover, .user-item:hover, .menu-item:hover {
-            border-color: var(--primary);
-            background: rgba(30, 41, 59, 0.9);
-        }
-
-        .profile-item.active, .menu-item.active {
-            border-color: var(--primary);
-            background: rgba(99, 102, 241, 0.2);
-            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.25);
-        }
-
-        .badge {
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-weight: 600;
-            font-size: 11px;
-            color: white;
-        }
-
-        .bg-green { background-color: #10b981; }
-        .bg-yellow { background-color: #f59e0b; color: #000; }
-        .bg-red { background-color: #ef4444; }
-
-        .main-container {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            background: radial-gradient(circle at center, #131c31 0%, #0b0f19 100%);
-            overflow-y: auto;
-        }
-
-        .card {
-            background: var(--card-bg);
-            padding: 30px;
-            border-radius: 20px;
-            border: 1px solid var(--border-color);
-            text-align: center;
-            width: 480px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-        }
-
-        .card h2 {
-            color: var(--primary);
-            margin-top: 0;
-            font-size: 24px;
-            margin-bottom: 5px;
-        }
-
-        .big-number {
-            font-size: 70px;
-            font-weight: 800;
-            color: #10b981;
-            margin: 10px 0;
-            text-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
-            line-height: 1;
-        }
-
-        input, select, button {
-            width: 100%;
-            padding: 10px 14px;
-            margin-bottom: 8px;
-            background: var(--bg-main);
-            border: 1px solid var(--border-color);
-            color: white;
-            border-radius: 8px;
-            box-sizing: border-box;
-            font-size: 13px;
-        }
-
-        input:focus, select:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 8px rgba(99, 102, 241, 0.2);
-        }
+        input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 8px rgba(99, 102, 241, 0.2); }
 
         button {
-            background: var(--primary);
-            border: none;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.2s ease;
+            background: var(--primary); border: none; cursor: pointer;
+            font-weight: 600; transition: all 0.2s ease;
         }
         button:hover { background: var(--primary-hover); }
 
-        .btn-secondary { background: #334155; }
-        .btn-secondary:hover { background: #475569; }
-
-        .btn-danger { background: #ef4444; }
-        .btn-danger:hover { background: #dc2626; }
-
-        .settings-box {
-            text-align: right;
-            margin-top: 15px;
-            background: rgba(15, 23, 42, 0.5);
-            padding: 12px;
-            border-radius: 10px;
+        .subscription-box {
+            background: rgba(30, 41, 59, 0.8);
             border: 1px solid var(--border-color);
+            padding: 25px; border-radius: 14px;
+            cursor: pointer; transition: all 0.3s ease; margin-top: 15px;
         }
-
-        .admin-only {
-            display: none;
+        .subscription-box:hover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.2);
+            transform: translateY(-3px);
         }
-
-        .role-badge {
-            font-size: 11px;
-            padding: 3px 8px;
-            border-radius: 4px;
-            margin-top: 5px;
-            display: inline-block;
-        }
-
-        .users-list {
-            max-height: 150px;
-            overflow-y: auto;
-            margin-top: 10px;
-            text-align: right;
-        }
+        .subscription-box h3 { color: var(--primary); margin: 0 0 8px 0; font-size: 20px; }
+        .subscription-box p { color: var(--text-muted); margin: 0; font-size: 13px; }
     </style>
 </head>
 <body>
 
     <!-- نافذة تسجيل الدخول -->
-    <div id="loginOverlay">
-        <div class="login-card">
-            <h2>تسجيل الدخول</h2>
-            <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 20px;">أدخل بيانات الحساب للمتابعة</p>
-            <input type="text" id="loginUser" placeholder="اسم المستخدم " autocomplete="off">
-            <input type="password" id="loginPass" placeholder="كلمة المرور ">
-            <button onclick="handleLogin()" style="margin-top: 10px;">دخول</button>
-            <div id="loginError" style="color: #ef4444; font-size: 12px; margin-top: 10px;"></div>
-        </div>
+    <div id="loginCard">
+        <h2>تسجيل الدخول</h2>
+        <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 20px;">أدخل بيانات الحساب للمتابعة</p>
+        <input type="text" id="loginUser" placeholder="اسم المستخدم (Username)" autocomplete="off">
+        <input type="password" id="loginPass" placeholder="كلمة المرور (Password)">
+        <button onclick="handleLogin()">دخول</button>
+        <div id="loginError" style="color: #ef4444; font-size: 12px; margin-top: 10px;"></div>
     </div>
 
-    <!-- قائمة البروفايلات (في اليمين) -->
-    <div class="sidebar">
-        <h3>الاشتركات</h3>
-        <div class="profiles-list" id="listContainer"></div>
-
-        <!-- أزرار الإدارة والقائمة بالأسفل -->
-        <div id="adminBottomMenu" class="admin-only" style="border-top: 1px solid var(--border-color); padding-top: 12px; margin-top: auto; display: flex; flex-direction: column; gap: 6px;">
-            <div id="createMenuToggle" class="menu-item" onclick="toggleView('create')">
-                <span>➕ إنشاء اشتراك جديد</span>
-            </div>
-            <div id="settingsMenuToggle" class="menu-item" onclick="toggleView('settings')">
-                <span>⚙️ الإعدادات والصلاحيات</span>
-            </div>
+    <!-- الشاشة الرئيسية (مربع الاشتراكات) -->
+    <div id="dashboardCard">
+        <h2>مرحباً بك</h2>
+        <p style="color: var(--text-muted); font-size: 13px;">اختر الخيار للانتقال للعدادات:</p>
+        <div class="subscription-box" onclick="goToCountdown()">
+            <h3>📅 الاشتراكات</h3>
+            <p>انقر هنا لعرض العداد التنازلي والبروفايلات</p>
         </div>
-        
-        <button class="btn-secondary" onclick="logout()" style="margin-top: 8px; margin-bottom: 0;">تسجيل خروج</button>
-    </div>
-
-    <!-- المحتوى الرئيسي (في اليسار) -->
-    <div class="main-container">
-        <!-- 1. عرض العداد العادي -->
-        <div class="card" id="countdownCardView">
-            <h2 id="activeTitle"></h2>
-            <div style="color: var(--text-muted); font-size: 14px;">الأيام المتبقية</div>
-            <div class="big-number" id="daysDisplay">0</div>
-            <div id="userRoleIndicator"></div>
-
-            <div id="adminSettingsSection" class="admin-only" style="margin-top: 15px;">
-                <div class="settings-box">
-                    <label style="font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 6px;">تعديل الأيام (حتى 365 يوم):</label>
-                    <div style="display: flex; gap: 8px;">
-                        <input type="number" id="daysInput" min="1" max="365" value="92" style="margin-bottom:0;">
-                        <button onclick="updateDays()" style="width: 100px; margin-bottom:0;">تعيين</button>
-                    </div>
-                </div>
-
-                <div style="display: flex; gap: 8px; margin-top: 10px;">
-                    <button class="btn-secondary" onclick="renameProfile()">إعادة تسميه الاشتراك</button>
-                    <button class="btn-danger" onclick="deleteProfile()">حذف الاشتراك</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- 2. عرض شاشة إنشاء بروفايل جديد -->
-        <div class="card admin-only" id="createPanelView" style="display: none; text-align: right;">
-            <h2 style="color: var(--primary); text-align: center; margin-bottom: 20px;">إنشاء اشتراك جديد</h2>
-            
-            <div class="settings-box" style="margin-top: 0;">
-                <label style="font-size: 13px; color: var(--text-muted); display: block; margin-bottom: 6px;">اسم الاشتراك:</label>
-                <input type="text" id="newProfileNameInput" placeholder="أدخل اسم الاشتراك..." style="margin-bottom: 12px;" autocomplete="off">
-                
-                <label style="font-size: 13px; color: var(--text-muted); display: block; margin-bottom: 6px;">عدد الأيام:</label>
-                <input type="number" id="newProfileDaysInput" min="1" max="365" value="92" style="margin-bottom: 15px;">
-                
-                <button onclick="submitCreateProfile()">تعيين وإنشاء الاشتراك</button>
-            </div>
-
-            <button class="btn-secondary" onclick="activeTab = 'countdown'; render();" style="margin-top: 15px;">إلغاء والعودة للعداد</button>
-        </div>
-
-        <!-- 3. عرض لوحة إدارة المستخدمين والإعدادات -->
-        <div class="card admin-only" id="settingsPanelView" style="display: none; text-align: right;">
-            <h2 style="color: var(--primary); text-align: center; margin-bottom: 20px;">إدارة المستخدمين والصلاحيات</h2>
-            
-            <div class="settings-box" style="margin-top: 0;">
-                <label style="font-size: 13px; color: var(--primary); display: block; margin-bottom: 8px; font-weight: bold;">إضافة حساب مشاهد أو مدير جديد:</label>
-                <input type="text" id="newUsername" placeholder="يوزر المستخدم الجديد" style="margin-bottom: 8px;" autocomplete="off">
-                <input type="password" id="newUserPass" placeholder="كلمة المرور" style="margin-bottom: 8px;">
-                <select id="newUserRole" style="margin-bottom: 8px;">
-                    <option value="viewer">مُشاهد (قراءة فقط)</option>
-                    <option value="admin">مدير (تحكم كامل)</option>
-                </select>
-                <button onclick="createNewUser()">إنشاء وحفظ المستخدم</button>
-            </div>
-
-            <div class="settings-box" style="margin-top: 15px;">
-                <label style="font-size: 13px; color: var(--text-main); display: block; margin-bottom: 8px; font-weight: bold;">الحسابات الحالية في النظام:</label>
-                <div class="users-list" id="usersListContainer"></div>
-            </div>
-
-            <button class="btn-secondary" onclick="activeTab = 'countdown'; render();" style="margin-top: 15px;">العودة للعداد التنازلي</button>
-        </div>
+        <button onclick="logout()" style="margin-top: 25px; background: #334155;">تسجيل خروج</button>
     </div>
 
     <script>
-        let accounts = JSON.parse(localStorage.getItem('simple_countdown_users_v9')) || {
-            "admin": { pass: "1234", role: "admin", name: "المدير الأساسي" }
+        // إعدادات Firebase الخاصة بك
+        const firebaseConfig = {
+            apiKey: "AIzaSyBraw98K7uLeQ5p7xmgn88x2jczO2EtzXM",
+            authDomain: "jawharat-al-zaman-company.firebaseapp.com",
+            databaseURL: "https://jawharat-al-zaman-company-default-rtdb.firebaseio.com", // أضفنا رابط قاعدة البيانات هنا
+            projectId: "jawharat-al-zaman-company",
+            storageBucket: "jawharat-al-zaman-company.firebasestorage.app",
+            messagingSenderId: "117069348206",
+            appId: "1:117069348206:web:1d8e3c9c365557d02b557f",
+            measurementId: "G-DPKEELR14J"
         };
 
-        let currentUser = null;
-        try {
-            currentUser = JSON.parse(localStorage.getItem('current_logged_user_v9')) || null;
-        } catch(e) {
-            currentUser = null;
-        }
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-        let data = JSON.parse(localStorage.getItem('simple_countdown_app_v9')) || {
-            "الهدف الأساسي": { days: 92, maxDays: 92, date: new Date().toDateString() }
-        };
+        let accounts = {};
 
-        let current = Object.keys(data)[0] || "الهدف الأساسي";
-        let activeTab = 'countdown';
-
-        function saveAppData() {
-            localStorage.setItem('simple_countdown_app_v9', JSON.stringify(data));
-        }
-
-        function saveUsersData() {
-            localStorage.setItem('simple_countdown_users_v9', JSON.stringify(accounts));
-        }
-
-        function checkDays() {
-            let today = new Date().toDateString();
-            let changed = false;
-            for (let p in data) {
-                if (data[p].date !== today) {
-                    let diff = Math.floor((new Date(today) - new Date(data[p].date)) / (1000 * 60 * 60 * 24));
-                    if (diff > 0) {
-                        data[p].days = Math.max(0, data[p].days - diff);
-                        data[p].date = today;
-                        changed = true;
-                    }
-                }
+        // جلب الحسابات من السيرفر مباشرة
+        db.ref('users').on('value', (snapshot) => {
+            accounts = snapshot.val() || {
+                "admin": { pass: "1234", role: "admin", name: "المدير الأساسي" }
+            };
+            // إذا لم يكن الحساب الافتراضي موجوداً على السيرفر، أنشئه تلقائياً
+            if (!snapshot.exists()) {
+                db.ref('users/admin').set({ pass: "1234", role: "admin", name: "المدير الأساسي" });
             }
-            if (changed) saveAppData();
-        }
-
-        function getColorClass(d) {
-            if (d > 20) return 'bg-green';
-            if (d > 10) return 'bg-yellow';
-            return 'bg-red';
-        }
+        });
 
         function handleLogin() {
-            let uInput = document.getElementById('loginUser');
-            let pInput = document.getElementById('loginPass');
+            let uInput = document.getElementById('loginUser').value.trim();
+            let pInput = document.getElementById('loginPass').value.trim();
             let err = document.getElementById('loginError');
 
-            let u = uInput.value.trim();
-            let p = pInput.value.trim();
-
-            if (accounts[u] && accounts[u].pass === p) {
-                currentUser = { username: u, ...accounts[u] };
-                localStorage.setItem('current_logged_user_v9', JSON.stringify(currentUser));
-                document.getElementById('loginOverlay').style.display = 'none';
-                err.textContent = '';
-                activeTab = 'countdown';
-                render();
+            if (accounts[uInput] && accounts[uInput].pass === pInput) {
+                let currentUser = { username: uInput, ...accounts[uInput] };
+                localStorage.setItem('current_logged_user_v10', JSON.stringify(currentUser));
+                showDashboard();
             } else {
                 err.textContent = 'اسم المستخدم أو كلمة المرور غير صحيحة!';
             }
         }
 
-        document.getElementById('loginPass').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') handleLogin();
-        });
-        document.getElementById('loginUser').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') handleLogin();
-        });
+        function showDashboard() {
+            document.getElementById('loginCard').style.display = 'none';
+            document.getElementById('dashboardCard').style.display = 'block';
+        }
+
+        function goToCountdown() {
+            window.location.href = 'countdown.html';
+        }
 
         function logout() {
-            localStorage.removeItem('current_logged_user_v9');
-            currentUser = null;
-            activeTab = 'countdown';
-            document.getElementById('loginOverlay').style.display = 'flex';
+            localStorage.removeItem('current_logged_user_v10');
+            document.getElementById('dashboardCard').style.display = 'none';
+            document.getElementById('loginCard').style.display = 'block';
             document.getElementById('loginUser').value = '';
             document.getElementById('loginPass').value = '';
             document.getElementById('loginError').textContent = '';
         }
 
-        function toggleView(tabName) {
-            activeTab = tabName;
-            render();
-        }
-
-        function submitCreateProfile() {
-            if (!currentUser || currentUser.role !== 'admin') return;
-            let nameInput = document.getElementById('newProfileNameInput');
-            let daysInput = document.getElementById('newProfileDaysInput');
-            
-            let name = nameInput.value.trim();
-            let daysVal = parseInt(daysInput.value);
-
-            if (!name) return alert('الرجاء كتابة اسم الاشتراك');
-            if (data[name]) return alert('هذا الاشتراك موجود مسبقاً');
-            if (isNaN(daysVal) || daysVal < 1 || daysVal > 365) return alert('الرجاء إدخال عدد أيام صحيح بين 1 و 365');
-
-            data[name] = { days: daysVal, maxDays: daysVal, date: new Date().toDateString() };
-            current = name;
-            nameInput.value = '';
-            daysInput.value = '92';
-            saveAppData();
-            activeTab = 'countdown';
-            render();
-        }
-
-        function createNewUser() {
-            let u = document.getElementById('newUsername').value.trim();
-            let p = document.getElementById('newUserPass').value.trim();
-            let role = document.getElementById('newUserRole').value;
-
-            if (!u || !p) return alert('الرجاء ملء خانة اليوزر وكلمة المرور');
-            if (accounts[u]) return alert('هذا المستخدم موجود مسبقاً!');
-
-            accounts[u] = { pass: p, role: role, name: u };
-            saveUsersData();
-            
-            document.getElementById('newUsername').value = '';
-            document.getElementById('newUserPass').value = '';
-            renderUsersList();
-            alert('تم إنشاء المستخدم بنجاح!');
-        }
-
-        function deleteUser(username) {
-            if (username === currentUser.username) return alert('لا يمكنك حذف حسابك الحالي!');
-            if (Object.keys(accounts).length <= 1) return alert('يجب أن يبقى حساب مدير واحد على الأقل!');
-            
-            if (confirm(`هل تريد حذف المستخدم "${username}"؟`)) {
-                delete accounts[username];
-                saveUsersData();
-                renderUsersList();
-            }
-        }
-
-        function renderUsersList() {
-            let container = document.getElementById('usersListContainer');
-            if (!container) return;
-            container.innerHTML = '';
-
-            for (let uname in accounts) {
-                let item = document.createElement('div');
-                item.className = 'user-item';
-                let roleText = accounts[uname].role === 'admin' ? 'مدير' : 'مُشاهد';
-                
-                item.innerHTML = `
-                    <span><b>${uname}</b> (${roleText})</span>
-                    ${uname !== 'admin' ? `<button onclick="deleteUser('${uname}')" style="width: auto; padding: 4px 8px; font-size: 11px; background: #ef4444; margin-bottom:0;">حذف</button>` : '<span style="font-size:10px; color:var(--text-muted)">رئيسي</span>'}
-                `;
-                container.appendChild(item);
-            }
-        }
-
-        function applyPermissions() {
-            const adminElements = document.querySelectorAll('.admin-only');
-            const roleIndicator = document.getElementById('userRoleIndicator');
-
-            if (currentUser && currentUser.role === 'admin') {
-                adminElements.forEach(el => el.style.display = 'block');
-                roleIndicator.innerHTML = `<span class="role-badge" style="background: #10b981;"`;
-                renderUsersList();
-            } else {
-                adminElements.forEach(el => el.style.display = 'none');
-                roleIndicator.innerHTML = `<span class="role-badge" style="background: #f59e0b; color:#000;"`;
-                activeTab = 'countdown';
-            }
-        }
-
-        function render() {
-            if (!currentUser) {
-                document.getElementById('loginOverlay').style.display = 'flex';
-                return;
-            } else {
-                document.getElementById('loginOverlay').style.display = 'none';
-            }
-
-            applyPermissions();
-            checkDays();
-
-            const countdownView = document.getElementById('countdownCardView');
-            const createView = document.getElementById('createPanelView');
-            const settingsView = document.getElementById('settingsPanelView');
-            
-            const createToggleItem = document.getElementById('createMenuToggle');
-            const settingsToggleItem = document.getElementById('settingsMenuToggle');
-
-            if (createToggleItem) createToggleItem.classList.remove('active');
-            if (settingsToggleItem) settingsToggleItem.classList.remove('active');
-
-            if (currentUser.role === 'admin' && activeTab === 'create') {
-                countdownView.style.display = 'none';
-                createView.style.display = 'block';
-                settingsView.style.display = 'none';
-                if (createToggleItem) createToggleItem.classList.add('active');
-            } else if (currentUser.role === 'admin' && activeTab === 'settings') {
-                countdownView.style.display = 'none';
-                createView.style.display = 'none';
-                settingsView.style.display = 'block';
-                if (settingsToggleItem) settingsToggleItem.classList.add('active');
-            } else {
-                countdownView.style.display = 'block';
-                createView.style.display = 'none';
-                settingsView.style.display = 'none';
-            }
-
-            let container = document.getElementById('listContainer');
-            container.innerHTML = '';
-
-            let keys = Object.keys(data);
-            if (keys.length === 0) return;
-
-            if (!data[current]) current = keys[0];
-
-            keys.forEach(name => {
-                let item = document.createElement('div');
-                let isActive = (activeTab === 'countdown' && name === current);
-                item.className = `profile-item ${isActive ? 'active' : ''}`;
-                
-                let badgeClass = getColorClass(data[name].days);
-
-                item.innerHTML = `
-                    <span style="font-weight: 500;">${name}</span>
-                    <span class="badge ${badgeClass}">${data[name].days} يوم</span>
-                `;
-                item.onclick = () => {
-                    current = name;
-                    activeTab = 'countdown';
-                    render();
-                };
-                container.appendChild(item);
-            });
-
-            document.getElementById('activeTitle').textContent = current;
-            document.getElementById('daysDisplay').textContent = data[current].days;
-            let daysInput = document.getElementById('daysInput');
-            if (daysInput) daysInput.value = data[current].maxDays || 92;
-        }
-
-        function renameProfile() {
-            if (!currentUser || currentUser.role !== 'admin') return;
-            let newName = prompt(`أدخل الاسم الجديد للاشتراك "${current}":`, current);
-            if (!newName) return;
-            newName = newName.trim();
-            if (!newName) return alert('الاسم غير صالح');
-            if (data[newName]) return alert('هذا الاسم موجود مسبقاً!');
-
-            let newData = {};
-            for (let key in data) {
-                if (key === current) {
-                    newData[newName] = data[current];
-                } else {
-                    newData[key] = data[key];
-                }
-            }
-            data = newData;
-            current = newName;
-            saveAppData();
-            render();
-        }
-
-        function updateDays() {
-            if (!currentUser || currentUser.role !== 'admin') return;
-            let val = parseInt(document.getElementById('daysInput').value);
-            if (isNaN(val) || val < 1 || val > 365) return alert('أدخل رقماً بين 1 و 365');
-
-            data[current].days = val;
-            data[current].maxDays = val;
-            data[current].date = new Date().toDateString();
-            saveAppData();
-            render();
-        }
-
-        function deleteProfile() {
-            if (!currentUser || currentUser.role !== 'admin') return;
-            if (Object.keys(data).length <= 1) return alert('لا يمكنك حذف الاشتراك الوحيد!');
-            if (confirm(`هل أنت متأكد من حذف الاشتراك "${current}"؟`)) {
-                delete data[current];
-                current = Object.keys(data)[0];
-                saveAppData();
-                render();
-            }
-        }
-
         window.onload = () => {
-            if (currentUser && accounts[currentUser.username]) {
-                document.getElementById('loginOverlay').style.display = 'none';
-                render();
-            } else {
-                currentUser = null;
-                localStorage.removeItem('current_logged_user_v9');
-                document.getElementById('loginOverlay').style.display = 'flex';
+            let currentUser = JSON.parse(localStorage.getItem('current_logged_user_v10'));
+            if (currentUser) {
+                showDashboard();
             }
         };
+
+        document.getElementById('loginPass').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') handleLogin();
+        });
     </script>
 </body>
 </html>
