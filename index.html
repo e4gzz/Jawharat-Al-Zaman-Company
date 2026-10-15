@@ -8,16 +8,12 @@
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #0b0f19;
-            color: #f8fafc;
-            margin: 0; display: flex;
-            justify-content: center; align-items: center;
-            height: 100vh;
+            background-color: #0b0f19; color: #f8fafc;
+            margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh;
         }
         .login-card {
-            background: #1e293b; padding: 30px;
-            border-radius: 20px; border: 1px solid #334155;
-            text-align: center; width: 380px;
+            background: #1e293b; padding: 30px; border-radius: 20px;
+            border: 1px solid #334155; text-align: center; width: 380px;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
         }
         h2 { color: #6366f1; margin-top: 0; margin-bottom: 5px; }
@@ -28,10 +24,7 @@
             color: white; border-radius: 8px; box-sizing: border-box; font-size: 14px;
         }
         input:focus { outline: none; border-color: #6366f1; }
-        button {
-            background: #6366f1; border: none; cursor: pointer;
-            font-weight: 600; transition: background 0.2s;
-        }
+        button { background: #6366f1; border: none; cursor: pointer; font-weight: 600; }
         button:hover { background: #4f46e5; }
         .error-msg { color: #ef4444; font-size: 12px; margin-top: 5px; }
     </style>
@@ -44,7 +37,7 @@
         
         <input type="text" id="loginUser" placeholder="اسم المستخدم" autocomplete="off">
         <input type="password" id="loginPass" placeholder="كلمة المرور">
-        <button id="loginBtn">دخول</button>
+        <button id="loginBtn" onclick="handleLogin()">دخول</button>
         <div id="loginError" class="error-msg"></div>
     </div>
 
@@ -63,7 +56,7 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        document.getElementById('loginBtn').addEventListener('click', function() {
+        function handleLogin() {
             let uInput = document.getElementById('loginUser').value.trim();
             let pInput = document.getElementById('loginPass').value.trim();
             let err = document.getElementById('loginError');
@@ -74,9 +67,10 @@
                 return;
             }
 
-            btn.textContent = 'جاري الدخول...';
+            btn.textContent = 'جاري التحقق...';
+            err.textContent = '';
 
-            // تجاوز مشكلة تعليق الشبكة بالدخول المباشر لحساب المدير الأساسي
+            // حساب الادمن الافتراضي للدخول الفوري السريع
             if (uInput === 'admin' && pInput === '1234') {
                 let currentUser = { username: 'admin', role: 'admin', name: 'المدير الأساسي' };
                 localStorage.setItem('current_logged_user_v10', JSON.stringify(currentUser));
@@ -97,9 +91,9 @@
                 }
             }).catch((error) => {
                 btn.textContent = 'دخول';
-                err.textContent = 'خطأ في الاتصال بقاعدة البيانات';
+                err.textContent = 'خطأ في الاتصال بالشبكة';
             });
-        });
+        }
     </script>
 </body>
 </html>
