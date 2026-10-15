@@ -74,7 +74,6 @@
                 return;
             }
 
-            // فحص الحساب مباشرة من قاعدة بيانات Firebase التي أنشأتها
             db.ref('users/' + uInput).once('value').then((snapshot) => {
                 let userData = snapshot.val();
                 
