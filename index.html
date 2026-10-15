@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>العداد التنازلي للبروفايلات</title>
+    <title>العداد التنازلي للاشتراكات</title>
     <style>
         :root {
             --bg-main: #0b0f19;
@@ -97,10 +97,10 @@
     </div>
 
     <div class="sidebar">
-        <h3 style="color: var(--primary); text-align: center; margin-top:0;">البروفايلات</h3>
+        <h3 style="color: var(--primary); text-align: center; margin-top:0;">الاشتراكات</h3>
         <div class="profiles-list" id="listContainer"></div>
         <div id="adminBottomMenu" class="admin-only" style="border-top: 1px solid var(--border-color); padding-top: 10px; margin-top: auto; flex-direction: column; gap: 6px;">
-            <div class="menu-item" data-act="view" data-tab="create"><span>➕ إنشاء بروفايل جديد</span></div>
+            <div class="menu-item" data-act="view" data-tab="create"><span>➕ إنشاء اشتراك جديد</span></div>
             <div class="menu-item" data-act="view" data-tab="settings"><span>⚙️ الإعدادات والصلاحيات</span></div>
         </div>
         <button class="btn-secondary" data-act="logout" style="margin-top: 8px; margin-bottom:0;">تسجيل خروج</button>
@@ -126,8 +126,8 @@
         </div>
 
         <div class="card admin-only" id="createPanelView" style="text-align: right;">
-            <h2 style="color: var(--primary); text-align: center; margin-top:0;">إنشاء بروفايل جديد</h2>
-            <input type="text" id="newProfileNameInput" placeholder="اسم البروفايل..." autocomplete="off">
+            <h2 style="color: var(--primary); text-align: center; margin-top:0;">إنشاء اشتراك جديد</h2>
+            <input type="text" id="newProfileNameInput" placeholder="اسم الاشتراك..." autocomplete="off">
             <input type="number" id="newProfileDaysInput" min="1" max="365" value="92">
             <button data-act="createProfile">إنشاء وحفظ</button>
             <button class="btn-secondary" data-act="view" data-tab="countdown" style="margin-top: 5px;">إلغاء</button>
@@ -208,7 +208,7 @@
         onSnapshot(profilesRef, snap => {
             if (snap.exists()) data = snap.data().data;
             else { data = { "الهدف الأساسي": { days: 92, maxDays: 92, start: todayKey() } }; saveData(); }
-            // البروفايلات القديمة اللي ما لها تاريخ بداية تبدأ من اليوم
+            // الاشتراكات القديمة اللي ما لها تاريخ بداية تبدأ من اليوم
             let changed = false;
             for (const n in data) if (!data[n].start) { data[n].start = todayKey(); changed = true; }
             if (changed) saveData();
@@ -255,7 +255,7 @@
             const name = $('newProfileNameInput').value.trim();
             const days = parseInt($('newProfileDaysInput').value);
             if (!name || isNaN(days)) return alert('أدخل بيانات صحيحة');
-            if (data[name]) return alert('البروفايل موجود مسبقاً');
+            if (data[name]) return alert('الاشتراك موجود مسبقاً');
             data[name] = { days, maxDays: days, start: todayKey() };
             current = name;
             saveData();
@@ -298,7 +298,7 @@
         }
 
         function renameProfile() {
-            let newName = prompt("الاسم الجديد للبروفايل:", current);
+            let newName = prompt("الاسم الجديد للاشتراك:", current);
             if (!newName || !newName.trim()) return;
             newName = newName.trim();
             if (data[newName]) return alert('الاسم موجود مسبقاً');
@@ -310,8 +310,8 @@
         }
 
         function deleteProfile() {
-            if (Object.keys(data).length <= 1) return alert('لا يمكنك حذف البروفايل الوحيد');
-            if (confirm(`حذف بروفايل ${current}؟`)) {
+            if (Object.keys(data).length <= 1) return alert('لا يمكنك حذف الاشتراك الوحيد');
+            if (confirm(`حذف اشتراك ${current}؟`)) {
                 delete data[current];
                 current = Object.keys(data)[0];
                 saveData();
