@@ -63,28 +63,11 @@
         .btn-danger { background: #ef4444; }
         .admin-only { display: none; }
 
-        /* التكيف التلقائي لشاشات الهواتف المحمولة */
         @media (max-width: 768px) {
-            body {
-                flex-direction: column;
-                height: auto;
-                min-height: 100vh;
-                overflow-y: auto;
-            }
-            .sidebar {
-                width: 100%;
-                max-height: 250px;
-                border-left: none;
-                border-bottom: 1px solid var(--border-color);
-                order: 2;
-            }
-            .main-container {
-                order: 1;
-                min-height: 350px;
-            }
-            .big-number {
-                font-size: 50px;
-            }
+            body { flex-direction: column; height: auto; min-height: 100vh; overflow-y: auto; }
+            .sidebar { width: 100%; max-height: 250px; border-left: none; border-bottom: 1px solid var(--border-color); order: 2; }
+            .main-container { order: 1; min-height: 350px; }
+            .big-number { font-size: 50px; }
         }
     </style>
 </head>
@@ -146,7 +129,7 @@
                 <option value="viewer">مُشاهد (قراءة فقط)</option>
                 <option value="admin">مدير (تحكم كامل)</option>
             </select>
-            <button onclick="createNewUser()">حفظ المستخدم</button>
+            <button onclick="createNewUser()">حفظ المستخدم في السيرفر</button>
             <div id="usersListContainer" style="max-height: 120px; overflow-y: auto; margin-top: 10px;"></div>
             <button class="btn-secondary" onclick="activeTab = 'countdown'; render();" style="margin-top: 10px;">العودة</button>
         </div>
@@ -167,28 +150,36 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        let accounts = { "admin": { pass: "1234", role: "admin", name: "المدير الأساسي" } };
+        let accounts = {};
         let currentUser = JSON.parse(localStorage.getItem('current_logged_user_v9')) || null;
-        let data = { "الهدف الأساسي": { days: 92, maxDays: 92, date: new Date().toDateString() } };
-        let current = "الهدف الأساسي";
+        let data = {};
+        let current = "";
         let activeTab = 'countdown';
 
+        // الاستماع الفوري لقاعدة البيانات لتحديث البيانات والحسابات سحابياً
         db.ref('app_data').on('value', (snapshot) => {
             let val = snapshot.val();
             if (val) {
                 data = val;
-                if (!data[current]) current = Object.keys(data)[0];
+                if (!current || !data[current]) current = Object.keys(data)[0];
                 render();
-            } else { db.ref('app_data').set(data); }
+            } else {
+                // إدراج البيانات الافتراضية لأول مرة
+                data = { "الهدف الأساسي": { days: 92, maxDays: 92, date: new Date().toDateString() } };
+                db.ref('app_data').set(data);
+            }
         });
 
         db.ref('app_users').on('value', (snapshot) => {
             let val = snapshot.val();
             if (val) {
                 accounts = val;
-                if (!accounts["admin"]) { accounts["admin"] = { pass: "1234", role: "admin", name: "المدير الأساسي" }; db.ref('app_users').set(accounts); }
                 renderUsersList();
-            } else { db.ref('app_users').set(accounts); }
+            } else {
+                // إنشاء حساب المدير الافتراضي للسيرفر
+                accounts = { "admin": { pass: "1234", role: "admin", name: "المدير الأساسي" } };
+                db.ref('app_users').set(accounts);
+            }
         });
 
         function handleLogin() {
@@ -197,23 +188,22 @@
             let err = document.getElementById('loginError');
 
             if (!u || !p) { err.textContent = 'أدخل اسم المستخدم وكلمة المرور'; return; }
-            if (u === 'admin' && p === '1234') {
-                currentUser = { username: 'admin', pass: '1234', role: 'admin', name: 'المدير الأساسي' };
-                localStorage.setItem('current_logged_user_v9', JSON.stringify(currentUser));
-                document.getElementById('loginOverlay').style.display = 'none';
-                render(); return;
-            }
+            
             if (accounts[u] && String(accounts[u].pass) === String(p)) {
                 currentUser = { username: u, ...accounts[u] };
                 localStorage.setItem('current_logged_user_v9', JSON.stringify(currentUser));
                 document.getElementById('loginOverlay').style.display = 'none';
+                err.textContent = '';
                 render();
-            } else { err.textContent = 'خطأ في البيانات!'; }
+            } else {
+                err.textContent = 'اسم المستخدم أو كلمة المرور غير صحيحة!';
+            }
         }
 
         function logout() {
             localStorage.removeItem('current_logged_user_v9');
-            currentUser = null; location.reload();
+            currentUser = null;
+            location.reload();
         }
 
         function toggleView(tab) { activeTab = tab; render(); }
@@ -222,61 +212,96 @@
             let name = document.getElementById('newProfileNameInput').value.trim();
             let days = parseInt(document.getElementById('newProfileDaysInput').value);
             if (!name || isNaN(days)) return alert('أدخل بيانات صحيحة');
+            
             data[name] = { days: days, maxDays: days, date: new Date().toDateString() };
-            current = name; db.ref('app_data').set(data); activeTab = 'countdown'; render();
+            current = name;
+            db.ref('app_data').set(data).then(() => {
+                document.getElementById('newProfileNameInput').value = '';
+                activeTab = 'countdown';
+                render();
+            });
         }
 
         function createNewUser() {
             let u = document.getElementById('newUsername').value.trim();
             let p = document.getElementById('newUserPass').value.trim();
             let role = document.getElementById('newUserRole').value;
+            
             if (!u || !p) return alert('أدخل اليوزر والباسورد');
+            if (accounts[u]) return alert('المستخدم موجود مسبقاً!');
+
             accounts[u] = { pass: p, role: role, name: u };
-            db.ref('app_users').set(accounts); alert('تم الحفظ');
+            db.ref('app_users').set(accounts).then(() => {
+                document.getElementById('newUsername').value = '';
+                document.getElementById('newUserPass').value = '';
+                alert('تم حفظ المستخدم في السيرفر بنجاح!');
+            });
         }
 
         function deleteUser(uname) {
-            if (uname === 'admin') return;
-            delete accounts[uname]; db.ref('app_users').set(accounts);
+            if (uname === 'admin') return alert('لا يمكن حذف المدير الرئيسي');
+            if (confirm(`حذف المستخدم ${uname}؟`)) {
+                delete accounts[uname];
+                db.ref('app_users').set(accounts);
+            }
         }
 
         function renderUsersList() {
             let c = document.getElementById('usersListContainer');
-            if (!c) return; c.innerHTML = '';
+            if (!c) return; 
+            c.innerHTML = '';
             for (let u in accounts) {
-                c.innerHTML += `<div class="user-item"><span>${u}</span> ${u !== 'admin' ? `<button onclick="deleteUser('${u}')" style="width:auto; background:#ef4444; padding:2px 6px;">حذف</button>` : ''}</div>`;
+                c.innerHTML += `<div class="user-item"><span><b>${u}</b> (${accounts[u].role})</span> ${u !== 'admin' ? `<button onclick="deleteUser('${u}')" style="width:auto; background:#ef4444; padding:2px 6px; margin:0;">حذف</button>` : '<span style="font-size:11px; color:var(--text-muted)">رئيسي</span>'}</div>`;
             }
         }
 
         function updateDays() {
             let val = parseInt(document.getElementById('daysInput').value);
             if (isNaN(val)) return;
-            data[current].days = val; data[current].maxDays = val;
-            db.ref('app_data').set(data); render();
+            data[current].days = val;
+            data[current].maxDays = val;
+            db.ref('app_data').set(data);
         }
 
         function renameProfile() {
-            let newName = prompt("الاسم الجديد:", current);
-            if (!newName || data[newName]) return;
-            data[newName] = data[current]; delete data[current]; current = newName;
-            db.ref('app_data').set(data); render();
+            let newName = prompt("الاسم الجديد للبروفايل:", current);
+            if (!newName || !newName.trim() || data[newName]) return alert('الاسم غير صالح أو موجود مسبقاً');
+            newName = newName.trim();
+            data[newName] = data[current];
+            delete data[current];
+            current = newName;
+            db.ref('app_data').set(data);
         }
 
         function deleteProfile() {
-            if (Object.keys(data).length <= 1) return alert('لا يمكن حذف الكل');
-            delete data[current]; current = Object.keys(data)[0];
-            db.ref('app_data').set(data); render();
+            if (Object.keys(data).length <= 1) return alert('لا يمكنك حذف البروفايل الوحيد');
+            if (confirm(`حذف بروفايل ${current}؟`)) {
+                delete data[current];
+                current = Object.keys(data)[0];
+                db.ref('app_data').set(data);
+            }
         }
 
         function render() {
-            if (!currentUser) { document.getElementById('loginOverlay').style.display = 'flex'; return; }
+            if (!currentUser || !accounts[currentUser.username]) {
+                document.getElementById('loginOverlay').style.display = 'flex';
+                return;
+            }
             document.getElementById('loginOverlay').style.display = 'none';
             
             let adminEls = document.querySelectorAll('.admin-only');
-            adminEls.forEach(el => el.style.display = (currentUser.role === 'admin' ? (el.id === 'countdownCardView' ? 'block' : (activeTab === 'create' && el.id === 'createPanelView' ? 'block' : (activeTab === 'settings' && el.id === 'settingsPanelView' ? 'block' : 'none'))) : 'none'));
-            if(currentUser.role === 'admin') {
+            adminEls.forEach(el => {
+                if (currentUser.role === 'admin') {
+                    if (el.id === 'countdownCardView') el.style.display = (activeTab === 'countdown' ? 'block' : 'none');
+                    else if (el.id === 'createPanelView') el.style.display = (activeTab === 'create' ? 'block' : 'none');
+                    else if (el.id === 'settingsPanelView') el.style.display = (activeTab === 'settings' ? 'block' : 'none');
+                } else {
+                    el.style.display = (el.id === 'countdownCardView' ? 'block' : 'none');
+                }
+            });
+
+            if (currentUser.role === 'admin') {
                 document.getElementById('adminBottomMenu').style.display = 'flex';
-                document.getElementById('countdownCardView').style.display = (activeTab === 'countdown' ? 'block' : 'none');
             }
 
             let container = document.getElementById('listContainer');
@@ -284,11 +309,17 @@
             for (let name in data) {
                 container.innerHTML += `<div class="profile-item ${name === current && activeTab === 'countdown' ? 'active' : ''}" onclick="current='${name}'; activeTab='countdown'; render();"><span>${name}</span><span>${data[name].days} يوم</span></div>`;
             }
-            document.getElementById('activeTitle').textContent = current;
-            document.getElementById('daysDisplay').textContent = data[current].days;
+            if (data[current]) {
+                document.getElementById('activeTitle').textContent = current;
+                document.getElementById('daysDisplay').textContent = data[current].days;
+                let daysInput = document.getElementById('daysInput');
+                if (daysInput) daysInput.value = data[current].maxDays || data[current].days;
+            }
         }
 
-        window.onload = () => { if (currentUser) render(); };
+        window.onload = () => {
+            if (currentUser) render();
+        };
     </script>
 </body>
 </html>
