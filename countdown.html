@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>العداد التنازلي والمنصة</title>
+    <title>العداد التنازلي - المنصة</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <style>
@@ -11,84 +11,89 @@
             background-color: #0b0f19; color: #f8fafc;
             margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; box-sizing: border-box;
         }
-        .container {
-            width: 100%; max-width: 600px; background: #1e293b; padding: 25px;
-            border-radius: 20px; border: 1px solid #334155; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4); margin-top: 20px; text-align: center;
+        .main-card {
+            width: 100%; max-width: 650px; background: #1e293b; padding: 30px;
+            border-radius: 20px; border: 1px solid #334155; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4); text-align: center; margin-top: 10px;
         }
-        h2, h3 { color: #6366f1; margin-top: 0; }
+        h1 { color: #6366f1; margin-top: 0; font-size: 24px; }
         p { color: #94a3b8; font-size: 14px; }
-        input, button {
-            width: 100%; padding: 10px 14px; margin-bottom: 10px;
-            background: #0b0f19; border: 1px solid #334155; color: white; border-radius: 8px; box-sizing: border-box; font-size: 14px;
-        }
-        input:focus { outline: none; border-color: #6366f1; }
-        button { background: #6366f1; border: none; cursor: pointer; font-weight: 600; }
-        button:hover { background: #4f46e5; }
-        .logout-btn { background: #ef4444; margin-top: 20px; }
-        .logout-btn:hover { background: #dc2626; }
         
-        /* تصميم العداد التنازلي بالأيام والساعات */
+        /* تصميم العداد التنازلي البارز */
         .timer-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-            margin: 20px 0;
+            gap: 12px;
+            margin: 25px 0;
         }
-        .timer-card {
+        .timer-box {
             background: #0b0f19;
             border: 1px solid #334155;
-            padding: 15px 10px;
+            padding: 15px 5px;
             border-radius: 12px;
-            text-align: center;
         }
         .timer-num {
-            font-size: 24px;
+            font-size: 28px;
             font-weight: bold;
             color: #10b981;
         }
         .timer-label {
-            font-size: 12px;
+            font-size: 13px;
             color: #94a3b8;
             margin-top: 5px;
         }
+
+        /* حقول الإدخال والأزرار */
+        input, button {
+            width: 100%; padding: 12px 14px; margin-bottom: 12px;
+            background: #0b0f19; border: 1px solid #334155; color: white; border-radius: 8px; box-sizing: border-box; font-size: 14px;
+        }
+        input:focus { outline: none; border-color: #6366f1; }
+        button { background: #6366f1; border: none; cursor: pointer; font-weight: 600; transition: background 0.2s; }
+        button:hover { background: #4f46e5; }
+        
+        .admin-section {
+            margin-top: 30px; border-top: 1px solid #334155; padding-top: 25px; text-align: right; display: none;
+        }
+        .logout-btn { background: #ef4444; margin-top: 25px; }
+        .logout-btn:hover { background: #dc2626; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h2>العداد التنازلي للفعالية</h2>
-        <div id="welcomeUser" style="margin-bottom: 15px; color: #94a3b8;">جاري التحميل...</div>
+    <div class="main-card">
+        <h1>العد التنازلي للفعالية الكبرى</h1>
+        <div id="userWelcome" style="color: #94a3b8; margin-bottom: 20px;">جاري التحميل...</div>
 
-        <!-- شكل العداد التنازلي للأيام والساعات -->
+        <!-- العداد التنازلي -->
         <div class="timer-grid">
-            <div class="timer-card">
+            <div class="timer-box">
                 <div class="timer-num" id="days">00</div>
                 <div class="timer-label">أيام</div>
             </div>
-            <div class="timer-card">
+            <div class="timer-box">
                 <div class="timer-num" id="hours">00</div>
                 <div class="timer-label">ساعات</div>
             </div>
-            <div class="timer-card">
+            <div class="timer-box">
                 <div class="timer-num" id="minutes">00</div>
                 <div class="timer-label">دقائق</div>
             </div>
-            <div class="timer-card">
+            <div class="timer-box">
                 <div class="timer-num" id="seconds">00</div>
                 <div class="timer-label">ثواني</div>
             </div>
         </div>
 
-        <!-- لوحة إدارة الحسابات (تظهر للمدير فقط) -->
-        <div id="adminPanel" style="display:none; margin-top: 30px; border-top: 1px solid #334155; padding-top: 20px; text-align: right;">
-            <h3>إدارة حسابات المشاهدة</h3>
-            <input type="text" id="newUsername" placeholder="اسم مستخدم المشاهد الجديد" autocomplete="off">
+        <!-- لوحة إدارة الحسابات للمدير فقط -->
+        <div id="adminPanel" class="admin-section">
+            <h3 style="color: #6366f1; margin-top: 0;">إدارة حسابات المشاهدين (خاص بالمدير)</h3>
+            <input type="text" id="newUsername" placeholder="اسم المستخدم الجديد للمشاهد" autocomplete="off">
             <input type="text" id="newPassword" placeholder="كلمة المرور">
-            <input type="text" id="newName" placeholder="اسم المشاهد / الوصف">
-            <button onclick="createViewer()">إضافة حساب جديد وتحديثه بالسيرفر</button>
+            <input type="text" id="newName" placeholder="اسم المشاهد أو الملاحظة">
+            <button onclick="addNewViewer()">إضافة وحفظ الحساب في السيرفر</button>
 
-            <h3 style="margin-top: 15px; font-size: 16px;">المشاهدين المسجلين:</h3>
-            <div id="viewersList" style="font-size: 13px; color: #94a3b8;">جاري التحميل...</div>
+            <h3 style="color: #6366f1; font-size: 16px; margin-top: 20px;">الحسابات المسجلة حالياً:</h3>
+            <div id="viewersList" style="color: #94a3b8; font-size: 13px;">جاري التحميل...</div>
         </div>
 
         <button class="logout-btn" onclick="logout()">تسجيل الخروج</button>
@@ -109,7 +114,7 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // تشغيل العداد التنازلي (ضبط التاريخ المستهدف هنا، مثال: نهاية العام أو أي تاريخ تختاره)
+        // تشغيل العداد التنازلي
         const targetDate = new Date("2026-12-31T23:59:59").getTime();
 
         function updateCountdown() {
@@ -138,20 +143,20 @@
         setInterval(updateCountdown, 1000);
         updateCountdown();
 
-        // التحقق من الجلسة الحالية للمستخدم
+        // التحقق من المستخدم المسجل
         let loggedUser = JSON.parse(localStorage.getItem('current_logged_user_v10'));
         if (!loggedUser) {
             window.location.replace('index.html');
         } else {
-            document.getElementById('welcomeUser').innerHTML = `مرحباً بك، <b>${loggedUser.name || loggedUser.username}</b>`;
+            document.getElementById('userWelcome').innerHTML = `أهلاً بك، <b>${loggedUser.name || loggedUser.username}</b>`;
             if (loggedUser.role === 'admin') {
                 document.getElementById('adminPanel').style.display = 'block';
-                loadViewers();
+                loadViewersList();
             }
         }
 
-        // دالة إضافة حساب مشاهد جديد
-        function createViewer() {
+        // دالة إضافة الحساب المباشرة
+        function addNewViewer() {
             let u = document.getElementById('newUsername').value.trim();
             let p = document.getElementById('newPassword').value.trim();
             let n = document.getElementById('newName').value.trim();
@@ -164,19 +169,19 @@
             db.ref('users/' + u).set({
                 pass: p,
                 role: 'viewer',
-                name: n || 'مستخدم'
+                name: n || 'مشاهد'
             }).then(() => {
-                alert('تمت إضافة وحفظ حساب المشاهد بنجاح على السيرفر!');
+                alert('تمت إضافة حساب المشاهد وحفظه في السيرفر بنجاح!');
                 document.getElementById('newUsername').value = '';
                 document.getElementById('newPassword').value = '';
                 document.getElementById('newName').value = '';
             }).catch((err) => {
-                alert('حدث خطأ أثناء الحفظ');
+                alert('حدث خطأ أثناء الإضافة');
             });
         }
 
-        // جلب قائمة المشاهدين وتحديثها سحابياً
-        function loadViewers() {
+        // جلب قائمة المشاهدين
+        function loadViewersList() {
             db.ref('users').on('value', (snapshot) => {
                 let users = snapshot.val();
                 let listDiv = document.getElementById('viewersList');
@@ -187,13 +192,13 @@
                     return;
                 }
 
-                let html = '<ul style="list-style: none; padding: 0;">';
+                let html = '<ul style="list-style: none; padding: 0; margin: 0;">';
                 for (let username in users) {
                     let user = users[username];
                     if (user.role === 'viewer') {
-                        html += `<li style="display: flex; justify-content: space-between; align-items: center; background: #0b0f19; padding: 8px; margin-bottom: 5px; border-radius: 6px; border: 1px solid #334155;">
+                        html += `<li style="display: flex; justify-content: space-between; align-items: center; background: #0b0f19; padding: 10px; margin-bottom: 6px; border-radius: 6px; border: 1px solid #334155;">
                             <span><b>${username}</b> (${user.name || 'بدون'}) - كلمة المرور: ${user.pass}</span>
-                            <button onclick="deleteViewer('${username}')" style="background: #ef4444; width: auto; padding: 4px 8px; font-size: 11px; margin:0;">حذف</button>
+                            <button onclick="deleteViewer('${username}')" style="background: #ef4444; width: auto; padding: 5px 10px; margin: 0; font-size: 12px;">حذف</button>
                         </li>`;
                     }
                 }
@@ -202,9 +207,9 @@
             });
         }
 
-        // حذف حساب المشاهد
+        // حذف المشاهد
         function deleteViewer(username) {
-            if (confirm(`هل تريد حذف الحساب ${username}؟`)) {
+            if (confirm(`هل أنت متأكد من حذف الحساب "${username}"؟`)) {
                 db.ref('users/' + username).remove();
             }
         }
