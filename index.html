@@ -33,9 +33,7 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;color:#f8fafc;margi
 .main{flex:1;display:flex;justify-content:center;align-items:center;padding:15px;overflow-y:auto;box-sizing:border-box}
 .card{background:var(--glass);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);padding:28px 22px;border-radius:24px;border:1px solid var(--gbd);box-shadow:0 25px 60px rgba(0,0,0,.45);text-align:center;width:100%;max-width:480px;box-sizing:border-box;animation:in .5s ease both}
 .big{font-size:60px;font-weight:800;color:#10b981;margin:10px 0;text-shadow:0 0 30px rgba(16,185,129,.35)}
-.note-view{display:none;margin-top:14px;text-align:right;background:rgba(11,15,25,.45);border:1px solid var(--gbd);padding:12px 14px;border-radius:16px}
-.note-label{font-size:12px;color:var(--mut);margin-bottom:6px}
-.note-text{font-size:14px;line-height:1.7;color:#e2e8f0;white-space:pre-wrap;word-break:break-word}
+.note-view{display:none;margin:6px 0 4px;padding:14px 18px;text-align:center;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.28);border-radius:16px;font-size:16px;line-height:1.8;color:#e2e8f0;white-space:pre-wrap;word-break:break-word}
 .admin-box{display:none;margin-top:18px;text-align:right;background:rgba(11,15,25,.45);border:1px solid var(--gbd);padding:14px;border-radius:16px}
 input,select,button,textarea{width:100%;padding:12px 14px;margin-bottom:10px;background:rgba(11,15,25,.7);border:1px solid var(--bd);color:#fff;border-radius:12px;box-sizing:border-box;font-size:14px;font-family:inherit;transition:border-color .2s,box-shadow .2s,transform .15s}
 textarea{min-height:80px;resize:vertical;line-height:1.6}
@@ -81,17 +79,14 @@ input,select,button,textarea{font-size:16px}.lcard{padding:30px 20px 22px}}
 <div style="color:var(--mut);font-size:14px">الأيام المتبقية</div>
 <div class="big" id="days">0</div>
 
-<div class="note-view" id="noteView">
-<div class="note-label">📝 ملاحظات</div>
-<div class="note-text" id="noteText"></div>
-</div>
+<div class="note-view" id="noteView"></div>
 
 <div id="adminBox" class="admin-box">
 <label style="font-size:12px;color:var(--mut);display:block;margin-bottom:6px">تعديل الأيام:</label>
 <div style="display:flex;gap:8px"><input type="number" id="dIn" min="1" max="365" style="margin-bottom:0"><button data-act="setDays" style="width:100px;margin-bottom:0">تعيين</button></div>
-<label style="font-size:12px;color:var(--mut);display:block;margin:12px 0 6px">الملاحظات:</label>
-<textarea id="noteIn" placeholder="اكتب ملاحظاتك هنا..."></textarea>
-<button class="sec" data-act="saveNote">حفظ الملاحظات</button>
+<label style="font-size:12px;color:var(--mut);display:block;margin:12px 0 6px">النص الذي يظهر تحت الأيام:</label>
+<textarea id="noteIn" placeholder="اكتب هنا..."></textarea>
+<button class="sec" data-act="saveNote">حفظ النص</button>
 <div style="display:flex;gap:8px"><button class="sec" data-act="rename" style="margin-bottom:0">إعادة تسمية</button><button class="dng" data-act="delP" style="margin-bottom:0">حذف</button></div>
 </div>
 </div>
@@ -100,7 +95,7 @@ input,select,button,textarea{font-size:16px}.lcard{padding:30px 20px 22px}}
 <h2 style="color:var(--prl);text-align:center;margin-top:0">إنشاء اشتراك جديد</h2>
 <input type="text" id="nName" placeholder="اسم الاشتراك..." autocomplete="off">
 <input type="number" id="nDays" min="1" max="365" value="92">
-<textarea id="nNote" placeholder="ملاحظات (اختياري)..."></textarea>
+<textarea id="nNote" placeholder="نص يظهر تحت الأيام (اختياري)..."></textarea>
 <button data-act="create">إنشاء وحفظ</button>
 <button class="sec" data-act="view" data-tab="countdown">إلغاء</button>
 </div>
@@ -214,9 +209,9 @@ function render() {
   const p = data[current];
   if (p) {
     $('days').textContent = left(p);
-    // الملاحظات تظهر داخل البطاقة الرئيسية تحت الأيام المتبقية
+    // النص يظهر داخل البطاقة الرئيسية تحت الأيام المتبقية (بدون عنوان)
     const note = (p.note || '').trim();
-    $('noteText').textContent = note;
+    $('noteView').textContent = note;
     $('noteView').style.display = note ? 'block' : 'none';
     if (document.activeElement !== $('dIn')) $('dIn').value = p.maxDays ?? p.days;
     if (document.activeElement !== $('noteIn')) $('noteIn').value = p.note || '';
@@ -238,7 +233,7 @@ const act = {
     data[current].note = $('noteIn').value.trim();
     saveData(); render();
     el.textContent = 'تم الحفظ ✓';
-    setTimeout(() => { el.textContent = 'حفظ الملاحظات'; }, 1500);
+    setTimeout(() => { el.textContent = 'حفظ النص'; }, 1500);
   },
   rename() {
     let n = prompt('الاسم الجديد للاشتراك:', current);
