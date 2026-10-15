@@ -73,10 +73,15 @@
         .admin-only { display: none; }
 
         @media (max-width: 768px) {
-            body { flex-direction: column; height: auto; min-height: 100vh; overflow-y: auto; }
-            .sidebar { width: 100%; max-height: 250px; border-left: none; border-bottom: 1px solid var(--border-color); order: 2; }
-            .main-container { order: 1; min-height: 350px; }
+            body { flex-direction: column; height: auto; min-height: 100vh; min-height: 100dvh; overflow-x: hidden; overflow-y: auto; }
+            .main-container { order: 1; flex: none; min-height: 0; padding: 12px; align-items: flex-start; overflow: visible; }
+            .sidebar { order: 2; flex: none; width: 100%; max-height: none; overflow-y: visible; padding: 15px; border-left: none; border-top: 1px solid var(--border-color); }
+            .profiles-list { flex: none; max-height: 220px; }
+            .card { padding: 20px 15px; }
             .big-number { font-size: 45px; }
+            /* 16px يمنع المتصفح من تكبير الصفحة تلقائياً لما تضغط على خانة إدخال */
+            input, select, button { font-size: 16px; }
+            #loginOverlay { overflow-y: auto; }
         }
     </style>
 </head>
