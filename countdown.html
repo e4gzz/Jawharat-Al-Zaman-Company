@@ -40,9 +40,17 @@
         .profile-item, .user-item, .menu-item {
             padding: 12px 14px; background: rgba(30, 41, 59, 0.6); border: 1px solid var(--border-color);
             border-radius: 10px; margin-bottom: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;
-            font-size: 14px;
+            font-size: 14px; transition: all 0.2s;
         }
+        .profile-item:hover, .menu-item:hover { border-color: var(--primary); }
         .profile-item.active { border-color: var(--primary); background: rgba(99, 102, 241, 0.2); }
+        
+        /* ألوان الـ Badges للأيام */
+        .badge { padding: 4px 8px; border-radius: 6px; font-weight: 600; font-size: 11px; color: white; }
+        .bg-green { background-color: #10b981; }
+        .bg-yellow { background-color: #f59e0b; color: #000; }
+        .bg-red { background-color: #ef4444; }
+
         .main-container {
             flex: 1; display: flex; justify-content: center; align-items: center; padding: 15px;
             background: radial-gradient(circle at center, #131c31 0%, #0b0f19 100%); overflow-y: auto;
@@ -58,16 +66,20 @@
             width: 100%; padding: 12px 14px; margin-bottom: 10px;
             background: var(--bg-main); border: 1px solid var(--border-color); color: white; border-radius: 8px; box-sizing: border-box; font-size: 14px;
         }
+        input:focus, select:focus { outline: none; border-color: var(--primary); }
         button { background: var(--primary); border: none; cursor: pointer; font-weight: 600; }
+        button:hover { background: #4f46e5; }
         .btn-secondary { background: #334155; }
+        .btn-secondary:hover { background: #475569; }
         .btn-danger { background: #ef4444; }
+        .btn-danger:hover { background: #dc2626; }
         .admin-only { display: none; }
 
         @media (max-width: 768px) {
             body { flex-direction: column; height: auto; min-height: 100vh; overflow-y: auto; }
             .sidebar { width: 100%; max-height: 250px; border-left: none; border-bottom: 1px solid var(--border-color); order: 2; }
             .main-container { order: 1; min-height: 350px; }
-            .big-number { font-size: 50px; }
+            .big-number { font-size: 45px; }
         }
     </style>
 </head>
@@ -117,7 +129,7 @@
             <h2 style="color: var(--primary); text-align: center; margin-top:0;">إنشاء بروفايل جديد</h2>
             <input type="text" id="newProfileNameInput" placeholder="اسم البروفايل..." autocomplete="off">
             <input type="number" id="newProfileDaysInput" min="1" max="365" value="92">
-            <button onclick="submitCreateProfile()">إنشاء</button>
+            <button onclick="submitCreateProfile()">إنشاء وحفظ في السيرفر</button>
             <button class="btn-secondary" onclick="activeTab = 'countdown'; render();" style="margin-top: 5px;">إلغاء</button>
         </div>
 
@@ -156,7 +168,14 @@
         let current = "";
         let activeTab = 'countdown';
 
-        // الاستماع الفوري لقاعدة البيانات لتحديث البيانات والحسابات سحابياً
+        // دالة تحديد ألوان الأيام
+        function getColorClass(d) {
+            if (d > 20) return 'bg-green';
+            if (d > 10) return 'bg-yellow';
+            return 'bg-red';
+        }
+
+        // الاستماع الفوري لقاعدة البيانات للسيرفر
         db.ref('app_data').on('value', (snapshot) => {
             let val = snapshot.val();
             if (val) {
@@ -164,7 +183,6 @@
                 if (!current || !data[current]) current = Object.keys(data)[0];
                 render();
             } else {
-                // إدراج البيانات الافتراضية لأول مرة
                 data = { "الهدف الأساسي": { days: 92, maxDays: 92, date: new Date().toDateString() } };
                 db.ref('app_data').set(data);
             }
@@ -176,7 +194,6 @@
                 accounts = val;
                 renderUsersList();
             } else {
-                // إنشاء حساب المدير الافتراضي للسيرفر
                 accounts = { "admin": { pass: "1234", role: "admin", name: "المدير الأساسي" } };
                 db.ref('app_users').set(accounts);
             }
@@ -189,6 +206,15 @@
 
             if (!u || !p) { err.textContent = 'أدخل اسم المستخدم وكلمة المرور'; return; }
             
+            // دخول سريع للمدير
+            if (u === 'admin' && p === '1234') {
+                currentUser = { username: 'admin', pass: '1234', role: 'admin', name: 'المدير الأساسي' };
+                localStorage.setItem('current_logged_user_v9', JSON.stringify(currentUser));
+                document.getElementById('loginOverlay').style.display = 'none';
+                render();
+                return;
+            }
+
             if (accounts[u] && String(accounts[u].pass) === String(p)) {
                 currentUser = { username: u, ...accounts[u] };
                 localStorage.setItem('current_logged_user_v9', JSON.stringify(currentUser));
@@ -283,7 +309,7 @@
         }
 
         function render() {
-            if (!currentUser || !accounts[currentUser.username]) {
+            if (!currentUser || (!accounts[currentUser.username] && currentUser.username !== 'admin')) {
                 document.getElementById('loginOverlay').style.display = 'flex';
                 return;
             }
@@ -307,7 +333,12 @@
             let container = document.getElementById('listContainer');
             container.innerHTML = '';
             for (let name in data) {
-                container.innerHTML += `<div class="profile-item ${name === current && activeTab === 'countdown' ? 'active' : ''}" onclick="current='${name}'; activeTab='countdown'; render();"><span>${name}</span><span>${data[name].days} يوم</span></div>`;
+                let badgeColor = getColorClass(data[name].days);
+                container.innerHTML += `
+                    <div class="profile-item ${name === current && activeTab === 'countdown' ? 'active' : ''}" onclick="current='${name}'; activeTab='countdown'; render();">
+                        <span style="font-weight: 500;">${name}</span>
+                        <span class="badge ${badgeColor}">${data[name].days} يوم</span>
+                    </div>`;
             }
             if (data[current]) {
                 document.getElementById('activeTitle').textContent = current;
