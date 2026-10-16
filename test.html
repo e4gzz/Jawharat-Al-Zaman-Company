@@ -35,9 +35,29 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;color:#f8fafc;margi
 .g{background:#10b981}.y{background:#f59e0b;color:#000}.r{background:#ef4444}
 .main{flex:1;display:flex;justify-content:center;align-items:center;padding:15px;overflow-y:auto;box-sizing:border-box}
 .card{background:var(--glass);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);padding:28px 22px;border-radius:24px;border:1px solid var(--gbd);box-shadow:0 25px 60px rgba(0,0,0,.45);text-align:center;width:100%;max-width:480px;box-sizing:border-box;animation:in .5s ease both}
-.big{font-size:60px;font-weight:800;color:#10b981;margin:10px 0;text-shadow:0 0 30px rgba(16,185,129,.35)}
+.big{font-size:60px;font-weight:800;color:#10b981;margin:6px 0 12px;text-shadow:0 0 30px rgba(16,185,129,.35)}
+
+/* شريط التقدم وتاريخ الانتهاء */
+.prog{height:8px;border-radius:99px;background:rgba(148,163,184,.18);overflow:hidden;margin:0 0 8px}
+.prog i{display:block;height:100%;border-radius:99px;transition:width .6s ease,background .3s}
+.prog-txt{font-size:12px;color:var(--mut)}
+.end{font-size:13px;color:var(--prl);margin:8px 0 14px}
+
 .note-view{display:none;margin:6px 0 4px;padding:14px 18px;text-align:center;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.28);border-radius:16px;font-size:16px;line-height:1.8;color:#e2e8f0;white-space:pre-wrap;word-break:break-word}
-.admin-box{display:none;margin-top:18px;text-align:right;background:rgba(11,15,25,.45);border:1px solid var(--gbd);padding:14px;border-radius:16px}
+
+/* الساعة الحية */
+.clock{margin-top:18px;padding-top:16px;border-top:1px solid var(--gbd)}
+.c-day{font-size:22px;font-weight:700;color:var(--prl)}
+.c-date{font-size:15px;color:var(--mut);margin:2px 0 8px}
+.c-time{font-size:36px;font-weight:700;letter-spacing:1px;font-variant-numeric:tabular-nums}
+.c-time small{font-size:16px;font-weight:600;color:var(--mut);margin-right:6px}
+
+/* لوحة التعديل (تظهر عند الضغط على الاشتراك) */
+.admin-box{display:none;position:relative;margin-top:18px;text-align:right;background:rgba(11,15,25,.45);border:1px solid var(--gbd);padding:14px;border-radius:16px}
+.ab-head{font-size:14px;color:var(--mut);margin:0 0 12px;padding-left:44px}
+.ab-head b{color:#fff}
+.x{position:absolute;left:10px;top:10px;width:auto;margin:0;padding:4px 11px;font-size:14px;line-height:1.4}
+
 input,select,button,textarea{width:100%;padding:12px 14px;margin-bottom:10px;background:rgba(11,15,25,.7);border:1px solid var(--bd);color:#fff;border-radius:12px;box-sizing:border-box;font-size:14px;font-family:inherit;transition:border-color .2s,box-shadow .2s,transform .15s}
 textarea{min-height:80px;resize:vertical;line-height:1.6}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--pr);box-shadow:0 0 0 3px rgba(99,102,241,.25)}
@@ -51,7 +71,7 @@ button:active{transform:none}
 body{flex-direction:column;height:auto;min-height:100vh;min-height:100dvh;overflow-x:hidden;overflow-y:auto}
 .main{order:1;flex:none;padding:12px;align-items:flex-start;overflow:visible}
 .sidebar{order:2;flex:none;width:100%;overflow-y:visible;padding:15px;border-left:none;border-top:1px solid var(--gbd)}
-.plist{flex:none;max-height:220px}.card{padding:22px 16px}.big{font-size:45px}
+.plist{flex:none;max-height:220px}.card{padding:22px 16px}.big{font-size:48px}.c-time{font-size:32px}
 input,select,button,textarea{font-size:16px}.lcard{padding:30px 20px 22px}}
 </style>
 </head>
@@ -80,13 +100,26 @@ input,select,button,textarea{font-size:16px}.lcard{padding:30px 20px 22px}}
 
 <div class="main">
 <div class="card" id="vCount">
-<h2 id="title" style="color:var(--prl);margin-top:0">جاري التحميل...</h2>
 <div style="color:var(--mut);font-size:14px">الأيام المتبقية</div>
 <div class="big" id="days">0</div>
 
+<div class="prog"><i id="progBar"></i></div>
+<div class="prog-txt" id="progTxt"></div>
+<div class="end" id="endTxt"></div>
+
 <div class="note-view" id="noteView"></div>
 
+<!-- الوضع العادي: اليوم والتاريخ والساعة -->
+<div class="clock" id="clockBox">
+<div class="c-day" id="cDay"></div>
+<div class="c-date" id="cDate"></div>
+<div class="c-time" id="cTime"></div>
+</div>
+
+<!-- لوحة التعديل: تظهر بدل الساعة لما المدير يضغط على الاشتراك -->
 <div id="adminBox" class="admin-box">
+<button class="sec x" data-act="closePanel" aria-label="إغلاق">✕</button>
+<div class="ab-head">تعديل الاشتراك: <b id="pName"></b></div>
 <label style="font-size:12px;color:var(--mut);display:block;margin-bottom:6px">تعديل الأيام:</label>
 <div style="display:flex;gap:8px"><input type="number" id="dIn" min="1" max="365" style="margin-bottom:0"><button data-act="setDays" style="width:100px;margin-bottom:0">تعيين</button></div>
 <label style="font-size:12px;color:var(--mut);display:block;margin:12px 0 6px">النص الذي يظهر تحت الأيام:</label>
@@ -143,14 +176,22 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>'
 // ===== العد التنازلي: ينقص يوم عند 12 بالليل =====
 const today = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
 const dn = k => { const [y, m, d] = k.split('-').map(Number); return Date.UTC(y, m - 1, d) / 86400000; };
-const left = p => Math.max(0, (p.maxDays ?? p.days) - Math.max(0, dn(today()) - dn(p.start || today())));
+const total = p => p.maxDays ?? p.days;
+const left = p => Math.max(0, total(p) - Math.max(0, dn(today()) - dn(p.start || today())));
 const cls = d => d > 20 ? 'g' : d > 10 ? 'y' : 'r';
+const barColor = { g: '#10b981', y: '#f59e0b', r: '#ef4444' };
+const fmtDate = d => `${d.toLocaleDateString('ar-IQ', { weekday: 'long' })} ${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
 
-const loadedAt = new Date();
-const loadTime = pad(loadedAt.getHours()) + ':' + pad(loadedAt.getMinutes());
+// تاريخ الانتهاء = تاريخ البداية + عدد الأيام
+function endText(p) {
+  const [y, m, d] = (p.start || today()).split('-').map(Number);
+  const e = new Date(y, m - 1, d + total(p));
+  return (left(p) <= 0 ? 'انتهى الاشتراك يوم ' : 'ينتهي يوم ') + fmtDate(e);
+}
 
-let accounts = null, data = null, user = null, current = null, tab = 'countdown';
+let accounts = null, data = null, user = null, current = null, tab = 'countdown', panelOpen = false;
 try { user = JSON.parse(localStorage.getItem(SESSION_KEY))?.username || null; } catch (e) {}
+const isAdmin = () => !!(accounts && user && accounts[user]?.role === 'admin');
 
 const saveData = () => setDoc(profilesRef, { data }).catch(showError);
 const saveUsers = () => setDoc(usersRef, { accounts }).catch(showError);
@@ -172,16 +213,25 @@ onSnapshot(profilesRef, snap => {
   render();
 }, showError);
 
-// تحديث الرقم تلقائياً لو تغيّر اليوم والصفحة مفتوحة
+// ===== الساعة الحية (كل ثانية) + تحديث الأيام لو تغيّر اليوم =====
 let lastDay = today();
-setInterval(() => { if (today() !== lastDay) { lastDay = today(); render(); } }, 30000);
+function tick() {
+  const n = new Date();
+  const h = n.getHours(), ap = h >= 12 ? 'م' : 'ص', h12 = h % 12 || 12;
+  $('cDay').textContent = n.toLocaleDateString('ar-IQ', { weekday: 'long' });
+  $('cDate').textContent = `${pad(n.getDate())}/${pad(n.getMonth() + 1)}/${n.getFullYear()}`;
+  $('cTime').innerHTML = `<span dir="ltr">${h12}:${pad(n.getMinutes())}:${pad(n.getSeconds())}</span><small>${ap}</small>`;
+  if (today() !== lastDay) { lastDay = today(); render(); }
+}
+setInterval(tick, 1000);
+tick();
 
 function login() {
   const u = $('lu').value.trim(), p = $('lp').value.trim();
   if (!accounts) { $('err').textContent = 'جاري الاتصال بقاعدة البيانات، حاول بعد ثواني...'; return; }
   if (!u || !p) { $('err').textContent = 'أدخل اسم المستخدم وكلمة المرور'; return; }
   if (accounts[u] && String(accounts[u].pass) === p) {
-    user = u;
+    user = u; panelOpen = false;
     localStorage.setItem(SESSION_KEY, JSON.stringify({ username: u }));
     $('err').textContent = ''; $('lp').value = '';
     render();
@@ -192,12 +242,15 @@ function render() {
   if (!accounts || !data) return;
   if (!user || !accounts[user]) { $('login').style.display = 'flex'; return; }
   $('login').style.display = 'none';
-  const adm = accounts[user].role === 'admin';
-  if (!adm) tab = 'countdown';
+  const adm = isAdmin();
+  if (!adm) { tab = 'countdown'; panelOpen = false; }
+  const showPanel = adm && tab === 'countdown' && panelOpen;
+
   $('vCount').style.display = tab === 'countdown' ? 'block' : 'none';
   $('vCreate').style.display = adm && tab === 'create' ? 'block' : 'none';
   $('vSettings').style.display = adm && tab === 'settings' ? 'block' : 'none';
-  $('adminBox').style.display = adm ? 'block' : 'none';
+  $('adminBox').style.display = showPanel ? 'block' : 'none';
+  $('clockBox').style.display = showPanel ? 'none' : 'block';
   $('adminMenu').style.display = adm ? 'flex' : 'none';
 
   if (adm) $('ulist').innerHTML = Object.keys(accounts).map(u =>
@@ -211,16 +264,22 @@ function render() {
     return `<div class="item ${n === current && tab === 'countdown' ? 'active' : ''}" data-act="sel" data-name="${esc(n)}"><span style="font-weight:500">${esc(n)}</span><span class="badge ${cls(l)}">${l} يوم</span></div>`;
   }).join('');
 
-  const now = new Date();
-  $('title').innerHTML = `${now.toLocaleDateString('ar-IQ', { weekday: 'long' })} ${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}<div style="font-size:13px;color:var(--mut);font-weight:400;margin-top:4px">آخر تحديث للصفحة: ${loadTime}</div>`;
-
   const p = data[current];
   if (p) {
-    $('days').textContent = left(p);
+    const l = left(p), t = total(p), passed = t - l;
+    $('days').textContent = l;
+    // شريط التقدم
+    $('progBar').style.width = (t > 0 ? Math.min(100, passed / t * 100) : 0) + '%';
+    $('progBar').style.background = barColor[cls(l)];
+    $('progTxt').textContent = `مضى ${passed} من ${t} يوم`;
+    $('endTxt').textContent = endText(p);
+    // النص تحت الأيام
     const note = (p.note || '').trim();
     $('noteView').textContent = note;
     $('noteView').style.display = note ? 'block' : 'none';
-    if (document.activeElement !== $('dIn')) $('dIn').value = p.maxDays ?? p.days;
+    // لوحة التعديل
+    $('pName').textContent = current;
+    if (document.activeElement !== $('dIn')) $('dIn').value = t;
     if (document.activeElement !== $('noteIn')) $('noteIn').value = p.note || '';
   }
 }
@@ -228,9 +287,16 @@ function render() {
 const act = {
   login,
   eye(el) { const i = $('lp'); i.type = i.type === 'password' ? 'text' : 'password'; el.textContent = i.type === 'password' ? '👁️' : '🙈'; },
-  logout() { localStorage.removeItem(SESSION_KEY); user = null; tab = 'countdown'; render(); },
-  view(el) { tab = el.dataset.tab; render(); },
-  sel(el) { current = el.dataset.name; tab = 'countdown'; render(); },
+  logout() { localStorage.removeItem(SESSION_KEY); user = null; tab = 'countdown'; panelOpen = false; render(); },
+  view(el) { tab = el.dataset.tab; panelOpen = false; render(); },
+  // الضغط على الاشتراك: يفتح لوحة التعديل، والضغط عليه مرة ثانية يسكرها
+  sel(el) {
+    const n = el.dataset.name;
+    if (isAdmin() && tab === 'countdown' && current === n) panelOpen = !panelOpen;
+    else { current = n; tab = 'countdown'; panelOpen = isAdmin(); }
+    render();
+  },
+  closePanel() { panelOpen = false; render(); },
   setDays() {
     const v = parseInt($('dIn').value); if (isNaN(v)) return;
     data[current] = { ...data[current], days: v, maxDays: v, start: today() };
@@ -251,14 +317,14 @@ const act = {
   },
   delP() {
     if (Object.keys(data).length <= 1) return alert('لا يمكنك حذف الاشتراك الوحيد');
-    if (confirm(`حذف اشتراك ${current}؟`)) { delete data[current]; current = Object.keys(data)[0]; saveData(); render(); }
+    if (confirm(`حذف اشتراك ${current}؟`)) { delete data[current]; current = Object.keys(data)[0]; panelOpen = false; saveData(); render(); }
   },
   create() {
     const n = $('nName').value.trim(), d = parseInt($('nDays').value);
     if (!n || isNaN(d)) return alert('أدخل بيانات صحيحة');
     if (data[n]) return alert('الاشتراك موجود مسبقاً');
     data[n] = { days: d, maxDays: d, start: today(), note: $('nNote').value.trim() };
-    current = n; $('nName').value = ''; $('nNote').value = ''; tab = 'countdown';
+    current = n; $('nName').value = ''; $('nNote').value = ''; tab = 'countdown'; panelOpen = false;
     saveData(); render();
   },
   addUser() {
