@@ -57,9 +57,22 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;color:#f8fafc;margi
 .card{background:var(--glass);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);padding:28px 22px;border-radius:24px;border:1px solid var(--gbd);box-shadow:0 25px 60px rgba(0,0,0,.45);text-align:center;width:100%;max-width:480px;box-sizing:border-box;animation:in .5s ease both}
 .big{font-size:60px;font-weight:800;color:#10b981;margin:6px 0 12px;text-shadow:0 0 30px rgba(16,185,129,.35)}
 .big.amber{color:#fbbf24;text-shadow:0 0 30px rgba(251,191,36,.35);margin:6px 0 4px}
-.big small{font-size:18px;font-weight:600;color:var(--mut)}
-.prog{height:8px;border-radius:99px;background:rgba(148,163,184,.18);overflow:hidden;margin:0 0 8px}
-.prog i{display:block;height:100%;border-radius:99px;transition:width .6s ease,background .3s}
+
+/* ===== شريط تقدم متدرج زجاجي ذكي (Gradient Glass Progress Bar) ===== */
+.prog{height:12px;border-radius:99px;background:rgba(15,23,42,.7);border:1px solid rgba(255,255,255,.1);box-shadow:inset 0 2px 6px rgba(0,0,0,.5);overflow:hidden;margin:0 0 10px;padding:2px;box-sizing:border-box}
+.prog i{display:block;height:100%;border-radius:99px;transition:width .8s cubic-bezier(.4,0,.2,1),background .4s ease,box-shadow .4s ease;position:relative}
+.prog i::after{content:'';position:absolute;top:0;left:0;right:0;height:40%;background:rgba(255,255,255,.35);border-radius:99px 99px 0 0;pointer-events:none}
+
+/* أنماط ألوان الشريط المتدرج المتوهج */
+.prog-g{background:linear-gradient(90deg,#059669,#10b981,#34d399);box-shadow:0 0 15px rgba(16,185,129,.5)}
+.prog-y{background:linear-gradient(90deg,#d97706,#f59e0b,#fbbf24);box-shadow:0 0 18px rgba(245,158,11,.6);animation:pulse-glow 1.8s infinite ease-in-out}
+.prog-r{background:linear-gradient(90deg,#dc2626,#ef4444,#f87171);box-shadow:0 0 22px rgba(239,68,68,.8);animation:pulse-glow 1.2s infinite ease-in-out}
+
+@keyframes pulse-glow{
+  0%, 100%{opacity:1;filter:drop-shadow(0 0 6px currentColor)}
+  50%{opacity:.75;filter:drop-shadow(0 0 18px currentColor)}
+}
+
 .prog-txt{font-size:12px;color:var(--mut)}
 .end{font-size:13px;color:var(--prl);margin:8px 0 14px}
 .note-view{display:none;margin:6px 0 4px;padding:14px 18px;text-align:center;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.28);border-radius:16px;font-size:16px;line-height:1.8;color:#e2e8f0;white-space:pre-wrap;word-break:break-word}
@@ -240,7 +253,7 @@ const fmtISO = s => { const [y, m, d] = s.split('-').map(Number); return fmtDate
 const total = p => p.maxDays ?? p.days;
 const left = p => Math.max(0, total(p) - Math.max(0, dn(today()) - dn(p.start || today())));
 const cls = d => d > 20 ? 'g' : d > 10 ? 'y' : 'r';
-const barColor = { g: '#10b981', y: '#f59e0b', r: '#ef4444' };
+
 function endText(p) {
   const [y, m, d] = (p.start || today()).split('-').map(Number);
   const e = new Date(y, m - 1, d + total(p));
@@ -404,13 +417,19 @@ function render() {
       `<div class="item ${m === curMonth ? 'active' : ''}" data-act="selMonth" data-m="${m}"><span style="font-weight:500">${esc(monthName(m))}</span><span class="badge n">${fmt(sum(monthItems(m)))}</span></div>`).join('');
   }
 
-  // الاشتراك المختار
+  // الاشتراك المختار ورسم شريط التقدم النيون المتدرج
   const p = current && data[current];
   if (p) {
     const l = left(p), t = total(p), passed = t - l;
     $('days').textContent = l;
-    $('progBar').style.width = (t > 0 ? Math.min(100, passed / t * 100) : 0) + '%';
-    $('progBar').style.background = barColor[cls(l)];$('progTxt').textContent = `مضى ${passed} من ${t} يوم`;
+    
+    // شريط التقدم المتدرج النيون الذكي
+    const pb = $('progBar');
+    pb.style.width = (t > 0 ? Math.min(100, passed / t * 100) : 0) + '%';
+    const currentCls = cls(l);
+    pb.className = `prog-${currentCls}`;
+
+    $('progTxt').textContent = `مضى ${passed} من ${t} يوم`;
     $('endTxt').textContent = endText(p);
     const note = (p.note || '').trim();
     $('noteView').textContent = note;
@@ -419,7 +438,7 @@ function render() {
     if (document.activeElement !== $('dIn'))$('dIn').value = t;
     if (document.activeElement !== $('noteIn'))$('noteIn').value = p.note || '';
   } else {
-    $('days').textContent = '—'; $('progBar').style.width = '0';$('progTxt').textContent = ''; $('endTxt').textContent = '';$('noteView').style.display = 'none';
+    $('days').textContent = '—';$('progBar').style.width = '0'; $('progBar').className = '';$('progTxt').textContent = ''; $('endTxt').textContent = '';$('noteView').style.display = 'none';
   }
 
   // الصرفيات
