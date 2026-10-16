@@ -33,10 +33,10 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;color:#f8fafc;margi
 .tile:hover{transform:translateY(-4px);border-color:var(--pr);box-shadow:0 30px 60px rgba(99,102,241,.25)}
 .t-ico{width:64px;height:64px;margin:0 auto 14px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:30px;background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 10px 30px rgba(99,102,241,.45)}
 .tile.exp .t-ico{background:linear-gradient(135deg,#f59e0b,#ef4444);box-shadow:0 10px 30px rgba(245,158,11,.4)}
+.tile.users .t-ico{background:linear-gradient(135deg,#10b981,#059669);box-shadow:0 10px 30px rgba(16,185,129,.4)}
+.tile.logout .t-ico{background:linear-gradient(135deg,#ef4444,#dc2626);box-shadow:0 10px 30px rgba(239,68,68,.4)}
 .t-name{font-size:20px;font-weight:700;margin-bottom:6px}
 .t-sum{font-size:13px;color:var(--mut);line-height:1.8}
-.btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
-.btns button{width:auto;padding:10px 20px;margin:0}
 
 /* ===== الداخل ===== */
 .sidebar{width:280px;background:rgba(17,24,39,.55);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-left:1px solid var(--gbd);padding:20px;display:none;flex-direction:column;box-sizing:border-box;flex-shrink:0;overflow-y:auto}
@@ -125,10 +125,8 @@ input,select,button,textarea{font-size:16px}.lcard{padding:30px 20px 22px}}
 <div class="tiles">
 <div class="tile" data-act="open" data-sec="subs"><div class="t-ico">🔔</div><div class="t-name">الاشتراكات</div><div class="t-sum" id="sumSubs"></div></div>
 <div class="tile exp" data-act="open" data-sec="exp"><div class="t-ico">💸</div><div class="t-name">الصرفيات</div><div class="t-sum" id="sumExp"></div></div>
-</div>
-<div class="btns">
-<button class="sec" id="homeSet" data-act="open" data-sec="settings" style="display:none">⚙️ إدارة المستخدمين</button>
-<button class="sec" data-act="logout">تسجيل خروج</button>
+<div class="tile users" id="tileUsers" data-act="open" data-sec="settings" style="display:none"><div class="t-ico">⚙️</div><div class="t-name">إدارة المستخدمين</div><div class="t-sum">إضافة وإدارة حسابات النظام</div></div>
+<div class="tile logout" data-act="logout"><div class="t-ico">🚪</div><div class="t-name">تسجيل خروج</div><div class="t-sum">الخروج من الحساب الحالي</div></div>
 </div>
 </div>
 
@@ -254,7 +252,7 @@ const monthItems = k => (exps || []).filter(e => e.date.startsWith(k)).sort((a, 
 const sum = items => items.reduce((s, e) => s + e.amount, 0);
 
 // ===== الحالة =====
-let me = null;                 // { uid, name, role } بعد تسجيل الدخول
+let me = null;                  // { uid, name, role } بعد تسجيل الدخول
 let authReady = false;
 let data = null, exps = null, members = [];
 let current = null, tab = 'countdown', panelOpen = false, section = 'home';
@@ -333,7 +331,7 @@ const authMsg = e => ({
 }[e.code] || 'تعذّر تسجيل الدخول: ' + (e.code || e.message));
 
 async function login() {
-  const u = $('lu').value.trim().toLowerCase(), p = $('lp').value;
+  const u = $('lu').value.trim().toLowerCase(), p =$('lp').value;
   if (!u || !p) { $('err').textContent = 'أدخل اسم المستخدم وكلمة المرور'; return; }
   $('err').textContent = 'جاري الدخول...';
   try { await signInWithEmailAndPassword(auth, toEmail(u), p); $('lp').value = ''; }
@@ -345,8 +343,7 @@ let lastDay = today();
 function tick() {
   const n = new Date();
   const h = n.getHours(), ap = h >= 12 ? 'م' : 'ص', h12 = h % 12 || 12;
-  $('cDay').textContent = n.toLocaleDateString('ar-IQ', { weekday: 'long' });
-  $('cDate').textContent = `${pad(n.getDate())}/${pad(n.getMonth() + 1)}/${n.getFullYear()}`;
+  $('cDay').textContent = n.toLocaleDateString('ar-IQ', { weekday: 'long' });$('cDate').textContent = `${pad(n.getDate())}/${pad(n.getMonth() + 1)}/${n.getFullYear()}`;
   $('cTime').innerHTML = `<span dir="ltr">${h12}:${pad(n.getMinutes())}:${pad(n.getSeconds())}</span><small>${ap}</small>`;
   if (today() !== lastDay) { lastDay = today(); render(); }
 }
@@ -357,8 +354,7 @@ $('xDate').value = today();
 function render() {
   const loading = !authReady || (me && data === null);
   $('lcard').style.visibility = loading ? 'hidden' : 'visible';
-  if (loading || !me) { $('login').style.display = 'flex'; return; }
-  $('login').style.display = 'none';
+  if (loading || !me) { $('login').style.display = 'flex'; return; }$('login').style.display = 'none';
 
   const adm = isAdmin();
   if (!adm) { if (section === 'settings') section = 'home'; tab = 'countdown'; panelOpen = false; }
@@ -366,16 +362,13 @@ function render() {
   const showPanel = adm && inSubs && tab === 'countdown' && panelOpen && !!current;
 
   $('sidebar').style.display = (inSubs || inExp) ? 'flex' : 'none';
-  $('vHome').style.display = section === 'home' ? 'block' : 'none';
-  $('vCount').style.display = inSubs && tab === 'countdown' ? 'block' : 'none';
-  $('vCreate').style.display = inSubs && adm && tab === 'create' ? 'block' : 'none';
-  $('vExp').style.display = inExp ? 'block' : 'none';
+  $('vHome').style.display = section === 'home' ? 'block' : 'none';$('vCount').style.display = inSubs && tab === 'countdown' ? 'block' : 'none';
+  $('vCreate').style.display = inSubs && adm && tab === 'create' ? 'block' : 'none';$('vExp').style.display = inExp ? 'block' : 'none';
   $('vSettings').style.display = section === 'settings' && adm ? 'block' : 'none';
   $('adminBox').style.display = showPanel ? 'block' : 'none';
   $('clockBox').style.display = showPanel ? 'none' : 'block';
   $('adminMenu').style.display = inSubs && adm ? 'flex' : 'none';
-  $('homeSet').style.display = adm ? 'inline-block' : 'none';
-  $('eAdd').style.display = adm ? 'block' : 'none';
+  $('tileUsers').style.display = adm ? 'block' : 'none';
   $('sideTitle').textContent = inExp ? 'الصرفيات' : 'الاشتراكات';
 
   // الرئيسية
@@ -411,26 +404,23 @@ function render() {
     const l = left(p), t = total(p), passed = t - l;
     $('days').textContent = l;
     $('progBar').style.width = (t > 0 ? Math.min(100, passed / t * 100) : 0) + '%';
-    $('progBar').style.background = barColor[cls(l)];
-    $('progTxt').textContent = `مضى ${passed} من ${t} يوم`;
+    $('progBar').style.background = barColor[cls(l)];$('progTxt').textContent = `مضى ${passed} من ${t} يوم`;
     $('endTxt').textContent = endText(p);
     const note = (p.note || '').trim();
     $('noteView').textContent = note;
     $('noteView').style.display = note ? 'block' : 'none';
     $('pName').textContent = current;
-    if (document.activeElement !== $('dIn')) $('dIn').value = t;
-    if (document.activeElement !== $('noteIn')) $('noteIn').value = p.note || '';
+    if (document.activeElement !== $('dIn'))$('dIn').value = t;
+    if (document.activeElement !== $('noteIn'))$('noteIn').value = p.note || '';
   } else {
-    $('days').textContent = '—'; $('progBar').style.width = '0';
-    $('progTxt').textContent = ''; $('endTxt').textContent = ''; $('noteView').style.display = 'none';
+    $('days').textContent = '—'; $('progBar').style.width = '0';$('progTxt').textContent = ''; $('endTxt').textContent = '';$('noteView').style.display = 'none';
   }
 
   // الصرفيات
   if (inExp) {
     const items = monthItems(curMonth);
     $('eMonth').textContent = monthName(curMonth);
-    $('eTotal').textContent = fmt(sum(items));
-    $('eCur').textContent = CUR;
+    $('eTotal').textContent = fmt(sum(items));$('eCur').textContent = CUR;
     $('eCount').textContent = items.length ? `${items.length} صرفية خلال الشهر` : 'لا توجد صرفيات بهذا الشهر';
     $('eList').innerHTML = items.length ? items.map(e =>
       `<div class="erow"><div class="e-main"><b>${esc(e.name)}</b><span>${esc(fmtISO(e.date))}</span></div><div class="e-amt">${fmt(e.amount)} ${CUR}</div>` +
@@ -488,7 +478,7 @@ const act = {
     if (!n || isNaN(d)) return alert('أدخل بيانات صحيحة');
     if (data[n]) return alert('الاشتراك موجود مسبقاً');
     data[n] = { days: d, maxDays: d, start: today(), note: $('nNote').value.trim() };
-    current = n; $('nName').value = ''; $('nNote').value = ''; tab = 'countdown'; panelOpen = false;
+    current = n; $('nName').value = '';$('nNote').value = ''; tab = 'countdown'; panelOpen = false;
     saveData(); render();
   },
 
@@ -501,7 +491,7 @@ const act = {
     if (exps === null) return alert('جاري تحميل البيانات، حاول بعد ثواني');
     exps.push({ id: Date.now(), name, date, amount: amt });
     curMonth = date.slice(0, 7);
-    $('xName').value = ''; $('xAmt').value = '';
+    $('xName').value = '';$('xAmt').value = '';
     saveExps(); render(); $('xName').focus();
   },
   delExp(el) {
@@ -513,7 +503,7 @@ const act = {
   // --- المستخدمون (للمدير فقط) ---
   async addUser() {
     if (!isAdmin()) return;
-    const u = $('nUser').value.trim().toLowerCase(), p = $('nPass').value, role = $('nRole').value;
+    const u = $('nUser').value.trim().toLowerCase(), p = $('nPass').value, role =$('nRole').value;
     if (!/^[a-z0-9._-]{3,20}$/.test(u)) return alert('اسم المستخدم: حروف إنجليزية صغيرة وأرقام فقط (3 إلى 20 خانة)');
     if (p.length < 6) return alert('كلمة المرور 6 خانات على الأقل');
     const btn = $('addUserBtn'); btn.disabled = true;
@@ -521,7 +511,7 @@ const act = {
       const cred = await createUserWithEmailAndPassword(auth2, toEmail(u), p);
       await setDoc(doc(db, 'members', cred.user.uid), { name: u, role });
       await signOut(auth2);
-      $('nUser').value = ''; $('nPass').value = '';
+      $('nUser').value = '';$('nPass').value = '';
       alert('تم حفظ المستخدم بنجاح!');
     } catch (e) {
       console.error(e);
