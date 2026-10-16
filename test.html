@@ -63,11 +63,6 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;color:#f8fafc;margi
 .prog-txt{font-size:12px;color:var(--mut)}
 .end{font-size:13px;color:var(--prl);margin:8px 0 14px}
 .note-view{display:none;margin:6px 0 4px;padding:14px 18px;text-align:center;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.28);border-radius:16px;font-size:16px;line-height:1.8;color:#e2e8f0;white-space:pre-wrap;word-break:break-word}
-.clock{margin-top:18px;padding-top:16px;border-top:1px solid var(--gbd)}
-.c-day{font-size:22px;font-weight:700;color:var(--prl)}
-.c-date{font-size:15px;color:var(--mut);margin:2px 0 8px}
-.c-time{font-size:36px;font-weight:700;letter-spacing:1px;font-variant-numeric:tabular-nums}
-.c-time small{font-size:16px;font-weight:600;color:var(--mut);margin-right:6px}
 .admin-box{display:none;position:relative;margin-top:18px;text-align:right;background:rgba(11,15,25,.45);border:1px solid var(--gbd);padding:14px;border-radius:16px}
 .ab-head{font-size:14px;color:var(--mut);margin:0 0 12px;padding-left:44px}
 .ab-head b{color:#fff}
@@ -97,7 +92,7 @@ button:disabled{opacity:.6;cursor:wait}
 body{flex-direction:column;height:auto;min-height:100vh;min-height:100dvh;overflow-x:hidden;overflow-y:auto}
 .main{order:1;flex:none;padding:12px;align-items:flex-start;overflow:visible}
 .sidebar{order:2;flex:none;width:100%;overflow-y:visible;padding:15px;border-left:none;border-top:1px solid var(--gbd)}
-.plist{flex:none;max-height:220px}.card{padding:22px 16px}.big{font-size:48px}.c-time{font-size:32px}
+.plist{flex:none;max-height:220px}.card{padding:22px 16px}.big{font-size:48px}
 input,select,button,textarea{font-size:16px}.lcard{padding:30px 20px 22px}}
 </style>
 </head>
@@ -152,12 +147,6 @@ input,select,button,textarea{font-size:16px}.lcard{padding:30px 20px 22px}}
 <div class="prog-txt" id="progTxt"></div>
 <div class="end" id="endTxt"></div>
 <div class="note-view" id="noteView"></div>
-
-<div class="clock" id="clockBox">
-<div class="c-day" id="cDay"></div>
-<div class="c-date" id="cDate"></div>
-<div class="c-time" id="cTime"></div>
-</div>
 
 <div id="adminBox" class="admin-box">
 <button class="sec x" data-act="closePanel" aria-label="إغلاق">✕</button>
@@ -229,7 +218,6 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 const auth2 = getAuth(initializeApp(firebaseConfig, 'secondary'));
 
-// ===== بيانات النسخة التجريبية =====
 const profilesRef = doc(db, 'app', 'profiles_test');
 const expensesRef = doc(db, 'app', 'expenses_test');
 const membersCol = collection(db, 'members');
@@ -242,7 +230,6 @@ const pad = n => String(n).padStart(2, '0');
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt = n => Number(n).toLocaleString('en-US', { maximumFractionDigits: 2 });
 
-// ===== التواريخ =====
 const today = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
 const monthKey = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
 const monthName = k => { const [y, m] = k.split('-').map(Number); return new Date(y, m - 1, 1).toLocaleDateString('ar-IQ', { month: 'long' }) + ' ' + y; };
@@ -250,7 +237,6 @@ const dn = k => { const [y, m, d] = k.split('-').map(Number); return Date.UTC(y,
 const fmtDate = d => `${d.toLocaleDateString('ar-IQ', { weekday: 'long' })} ${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
 const fmtISO = s => { const [y, m, d] = s.split('-').map(Number); return fmtDate(new Date(y, m - 1, d)); };
 
-// ===== الاشتراكات =====
 const total = p => p.maxDays ?? p.days;
 const left = p => Math.max(0, total(p) - Math.max(0, dn(today()) - dn(p.start || today())));
 const cls = d => d > 20 ? 'g' : d > 10 ? 'y' : 'r';
@@ -261,11 +247,9 @@ function endText(p) {
   return (left(p) <= 0 ? 'انتهى الاشتراك يوم ' : 'ينتهي يوم ') + fmtDate(e);
 }
 
-// ===== الصرفيات =====
 const monthItems = k => (exps || []).filter(e => e.date && e.date.startsWith(k)).sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
 const sum = items => items.reduce((s, e) => s + e.amount, 0);
 
-// ===== الحالة =====
 let me = null;
 let authReady = false;
 let data = null, exps = null, members = [];
@@ -350,7 +334,7 @@ async function login() {
   catch (e) { $('err').textContent = authMsg(e); }
 }
 
-// ===== الساعة الحية (للشاشة الرئيسية وكارت الاشتراكات) =====
+// ===== الساعة الحية للشاشة الرئيسية =====
 let lastDay = today();
 function tick() {
   const n = new Date();
@@ -359,12 +343,6 @@ function tick() {
   const dateStr = `${pad(n.getDate())}/${pad(n.getMonth() + 1)}/${n.getFullYear()}`;
   const timeHTML = `<span dir="ltr">${h12}:${pad(n.getMinutes())}:${pad(n.getSeconds())}</span><small>${ap}</small>`;
 
-  // ساعة كارت الاشتراكات
-  $('cDay').textContent = dayStr;
-  $('cDate').textContent = dateStr;
-  $('cTime').innerHTML = timeHTML;
-
-  // ساعة الشاشة الرئيسية
   $('hDay').textContent = dayStr;
   $('hDate').textContent = dateStr;
   $('hTime').innerHTML = timeHTML;
@@ -394,7 +372,6 @@ function render() {
   $('vCreate').style.display = inSubs && adm && tab === 'create' ? 'block' : 'none';$('vExp').style.display = inExp ? 'block' : 'none';
   $('vSettings').style.display = section === 'settings' && adm ? 'block' : 'none';
   $('adminBox').style.display = showPanel ? 'block' : 'none';
-  $('clockBox').style.display = showPanel ? 'none' : 'block';
   $('adminMenu').style.display = inSubs && adm ? 'flex' : 'none';
   $('tileUsers').style.display = adm ? 'block' : 'none';
   $('eAdd').style.display = adm ? 'block' : 'none';
@@ -473,7 +450,6 @@ const act = {
   },
   view(el) { tab = el.dataset.tab; panelOpen = false; render(); },
 
-  // --- الاشتراكات ---
   sel(el) {
     const n = el.dataset.name;
     if (isAdmin() && tab === 'countdown' && current === n) panelOpen = !panelOpen;
@@ -514,7 +490,6 @@ const act = {
     saveData(); render();
   },
 
-  // --- الصرفيات (مصححة ومعدلة) ---
   selMonth(el) { curMonth = el.dataset.m; render(); },
   addExp() {
     if (!isAdmin()) return alert('ليس لديك صلاحية إضافة صرفيات');
@@ -542,7 +517,6 @@ const act = {
     if (confirm('حذف هذي الصرفية؟')) { exps = exps.filter(e => e.id !== id); saveExps(); render(); }
   },
 
-  // --- المستخدمون (للمدير فقط) ---
   async addUser() {
     if (!isAdmin()) return;
     const u = $('nUser').value.trim().toLowerCase(), p = $('nPass').value, role =$('nRole').value;
