@@ -3,13 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>العداد التنازلي للاشتراكات (تجريبي)</title>
+<title>الاشتراكات والصرفيات (تجريبي)</title>
 <style>
 :root{color-scheme:dark;--bg:#0b0f19;--glass:rgba(30,41,59,.65);--gbd:rgba(148,163,184,.18);--bd:rgba(148,163,184,.25);--pr:#6366f1;--pr2:#8b5cf6;--prl:#a5b4fc;--mut:#94a3b8;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 html{background:#0b0f19;scroll-padding-top:env(safe-area-inset-top,0px)}
 body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;color:#f8fafc;margin:0;display:flex;height:100vh;overflow:hidden;box-sizing:border-box;background:radial-gradient(circle at 15% 15%,rgba(99,102,241,.35),transparent 45%),radial-gradient(circle at 85% 85%,rgba(16,185,129,.22),transparent 45%),#0b0f19;background-repeat:no-repeat}
 
-/* شارة النسخة التجريبية */
 .test-badge{position:fixed;bottom:calc(10px + env(safe-area-inset-bottom,0px));left:10px;z-index:10000;padding:6px 12px;border-radius:999px;font-size:12px;font-weight:700;color:#000;background:#f59e0b;box-shadow:0 6px 18px rgba(245,158,11,.4);pointer-events:none}
 
 /* ===== صفحة الدخول ===== */
@@ -25,38 +24,61 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;color:#f8fafc;margi
 .lbtn{margin:8px 0 0;padding:14px;font-size:15px}
 #err{min-height:20px;margin-top:14px;font-size:13px;color:#f87171}
 
+/* ===== الشاشة الرئيسية (المربعات) ===== */
+.home{width:100%;max-width:560px;text-align:center}
+.home h1{font-size:28px;margin:0 0 4px}
+.hello{color:var(--mut);font-size:14px;margin-bottom:26px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:22px}
+.tile{padding:28px 18px;border-radius:24px;background:var(--glass);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid var(--gbd);box-shadow:0 25px 60px rgba(0,0,0,.45);cursor:pointer;transition:transform .2s,border-color .2s,box-shadow .2s;animation:in .5s ease both}
+.tile:hover{transform:translateY(-4px);border-color:var(--pr);box-shadow:0 30px 60px rgba(99,102,241,.25)}
+.t-ico{width:64px;height:64px;margin:0 auto 14px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:30px;background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 10px 30px rgba(99,102,241,.45)}
+.tile.exp .t-ico{background:linear-gradient(135deg,#f59e0b,#ef4444);box-shadow:0 10px 30px rgba(245,158,11,.4)}
+.t-name{font-size:20px;font-weight:700;margin-bottom:6px}
+.t-sum{font-size:13px;color:var(--mut);line-height:1.8}
+.btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.btns button{width:auto;padding:10px 20px;margin:0}
+
 /* ===== الداخل ===== */
-.sidebar{width:280px;background:rgba(17,24,39,.55);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-left:1px solid var(--gbd);padding:20px;display:flex;flex-direction:column;box-sizing:border-box;flex-shrink:0;overflow-y:auto}
+.sidebar{width:280px;background:rgba(17,24,39,.55);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-left:1px solid var(--gbd);padding:20px;display:none;flex-direction:column;box-sizing:border-box;flex-shrink:0;overflow-y:auto}
 .plist{flex:1;overflow-y:auto;margin-bottom:10px}
 .item{padding:12px 14px;background:rgba(15,23,42,.45);border:1px solid var(--gbd);border-radius:12px;margin-bottom:8px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:14px;transition:all .2s}
 .item:hover{border-color:var(--pr);background:rgba(99,102,241,.1)}
 .item.active{border-color:var(--pr);background:rgba(99,102,241,.22);box-shadow:0 0 0 3px rgba(99,102,241,.15)}
 .badge{padding:4px 8px;border-radius:6px;font-weight:600;font-size:11px;color:#fff}
-.g{background:#10b981}.y{background:#f59e0b;color:#000}.r{background:#ef4444}
+.g{background:#10b981}.y{background:#f59e0b;color:#000}.r{background:#ef4444}.n{background:#6366f1}
 .main{flex:1;display:flex;justify-content:center;align-items:center;padding:15px;overflow-y:auto;box-sizing:border-box}
 .card{background:var(--glass);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);padding:28px 22px;border-radius:24px;border:1px solid var(--gbd);box-shadow:0 25px 60px rgba(0,0,0,.45);text-align:center;width:100%;max-width:480px;box-sizing:border-box;animation:in .5s ease both}
 .big{font-size:60px;font-weight:800;color:#10b981;margin:6px 0 12px;text-shadow:0 0 30px rgba(16,185,129,.35)}
+.big.amber{color:#fbbf24;text-shadow:0 0 30px rgba(251,191,36,.35);margin:6px 0 4px}
+.big small{font-size:18px;font-weight:600;color:var(--mut)}
 
-/* شريط التقدم وتاريخ الانتهاء */
 .prog{height:8px;border-radius:99px;background:rgba(148,163,184,.18);overflow:hidden;margin:0 0 8px}
 .prog i{display:block;height:100%;border-radius:99px;transition:width .6s ease,background .3s}
 .prog-txt{font-size:12px;color:var(--mut)}
 .end{font-size:13px;color:var(--prl);margin:8px 0 14px}
-
 .note-view{display:none;margin:6px 0 4px;padding:14px 18px;text-align:center;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.28);border-radius:16px;font-size:16px;line-height:1.8;color:#e2e8f0;white-space:pre-wrap;word-break:break-word}
 
-/* الساعة الحية */
 .clock{margin-top:18px;padding-top:16px;border-top:1px solid var(--gbd)}
 .c-day{font-size:22px;font-weight:700;color:var(--prl)}
 .c-date{font-size:15px;color:var(--mut);margin:2px 0 8px}
 .c-time{font-size:36px;font-weight:700;letter-spacing:1px;font-variant-numeric:tabular-nums}
 .c-time small{font-size:16px;font-weight:600;color:var(--mut);margin-right:6px}
 
-/* لوحة التعديل (تظهر عند الضغط على الاشتراك) */
 .admin-box{display:none;position:relative;margin-top:18px;text-align:right;background:rgba(11,15,25,.45);border:1px solid var(--gbd);padding:14px;border-radius:16px}
 .ab-head{font-size:14px;color:var(--mut);margin:0 0 12px;padding-left:44px}
 .ab-head b{color:#fff}
 .x{position:absolute;left:10px;top:10px;width:auto;margin:0;padding:4px 11px;font-size:14px;line-height:1.4}
+
+/* الصرفيات */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.elist{max-height:340px;overflow-y:auto;margin-top:14px}
+.erow{display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(15,23,42,.45);border:1px solid var(--gbd);border-radius:12px;margin-bottom:8px;text-align:right}
+.e-main{flex:1;min-width:0}
+.e-main b{display:block;font-size:14px;word-break:break-word}
+.e-main span{font-size:12px;color:var(--mut)}
+.e-amt{font-weight:700;color:#fbbf24;white-space:nowrap;font-variant-numeric:tabular-nums}
+.erow button{width:auto;margin:0;padding:3px 9px;font-size:13px}
+.empty{color:var(--mut);font-size:13px;padding:14px 0}
 
 input,select,button,textarea{width:100%;padding:12px 14px;margin-bottom:10px;background:rgba(11,15,25,.7);border:1px solid var(--bd);color:#fff;border-radius:12px;box-sizing:border-box;font-size:14px;font-family:inherit;transition:border-color .2s,box-shadow .2s,transform .15s}
 textarea{min-height:80px;resize:vertical;line-height:1.6}
@@ -81,42 +103,54 @@ input,select,button,textarea{font-size:16px}.lcard{padding:30px 20px 22px}}
 
 <div id="login"><div class="lcard">
 <div class="logo"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
-<h2>مرحباً بك</h2><div class="sub">سجّل دخولك لمتابعة الاشتراكات</div>
+<h2>مرحباً بك</h2><div class="sub">سجّل دخولك للمتابعة</div>
 <div class="field"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><input type="text" id="lu" placeholder="اسم المستخدم" autocomplete="username"></div>
 <div class="field"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><input type="password" id="lp" placeholder="كلمة المرور" autocomplete="current-password"><button type="button" class="eye" data-act="eye" aria-label="إظهار كلمة المرور">👁️</button></div>
 <button class="lbtn" data-act="login">دخول</button>
 <div id="err"></div>
 </div></div>
 
-<div class="sidebar">
-<h3 style="color:var(--prl);text-align:center;margin-top:0">الاشتراكات</h3>
+<div class="sidebar" id="sidebar">
+<div class="item" data-act="home" style="justify-content:center;font-weight:600">🏠 الرئيسية</div>
+<h3 id="sideTitle" style="color:var(--prl);text-align:center;margin:6px 0 12px">الاشتراكات</h3>
 <div class="plist" id="list"></div>
 <div id="adminMenu" style="display:none;border-top:1px solid var(--gbd);padding-top:10px;margin-top:auto;flex-direction:column;gap:6px">
 <div class="item" data-act="view" data-tab="create"><span>➕ إنشاء اشتراك جديد</span></div>
-<div class="item" data-act="view" data-tab="settings"><span>⚙️ الإعدادات والصلاحيات</span></div>
 </div>
 <button class="sec" data-act="logout" style="margin-top:8px;margin-bottom:0">تسجيل خروج</button>
 </div>
 
 <div class="main">
+
+<!-- الشاشة الرئيسية -->
+<div class="home" id="vHome">
+<h1>🏠 الرئيسية</h1>
+<div class="hello" id="hello"></div>
+<div class="tiles">
+<div class="tile" data-act="open" data-sec="subs"><div class="t-ico">🔔</div><div class="t-name">الاشتراكات</div><div class="t-sum" id="sumSubs"></div></div>
+<div class="tile exp" data-act="open" data-sec="exp"><div class="t-ico">💸</div><div class="t-name">الصرفيات</div><div class="t-sum" id="sumExp"></div></div>
+</div>
+<div class="btns">
+<button class="sec" id="homeSet" data-act="open" data-sec="settings" style="display:none">⚙️ إدارة المستخدمين</button>
+<button class="sec" data-act="logout">تسجيل خروج</button>
+</div>
+</div>
+
+<!-- الاشتراكات -->
 <div class="card" id="vCount">
 <div style="color:var(--mut);font-size:14px">الأيام المتبقية</div>
 <div class="big" id="days">0</div>
-
 <div class="prog"><i id="progBar"></i></div>
 <div class="prog-txt" id="progTxt"></div>
 <div class="end" id="endTxt"></div>
-
 <div class="note-view" id="noteView"></div>
 
-<!-- الوضع العادي: اليوم والتاريخ والساعة -->
 <div class="clock" id="clockBox">
 <div class="c-day" id="cDay"></div>
 <div class="c-date" id="cDate"></div>
 <div class="c-time" id="cTime"></div>
 </div>
 
-<!-- لوحة التعديل: تظهر بدل الساعة لما المدير يضغط على الاشتراك -->
 <div id="adminBox" class="admin-box">
 <button class="sec x" data-act="closePanel" aria-label="إغلاق">✕</button>
 <div class="ab-head">تعديل الاشتراك: <b id="pName"></b></div>
@@ -138,6 +172,26 @@ input,select,button,textarea{font-size:16px}.lcard{padding:30px 20px 22px}}
 <button class="sec" data-act="view" data-tab="countdown">إلغاء</button>
 </div>
 
+<!-- الصرفيات -->
+<div class="card" id="vExp" style="display:none">
+<div style="color:var(--mut);font-size:14px">مجموع الصرفيات خلال شهر</div>
+<h2 id="eMonth" style="color:var(--prl);margin:4px 0 0"></h2>
+<div class="big amber"><span id="eTotal">0</span> <small id="eCur"></small></div>
+<div class="prog-txt" id="eCount"></div>
+
+<div id="eAdd" class="admin-box" style="margin-top:16px">
+<input type="text" id="xName" placeholder="اسم الصرفية..." autocomplete="off">
+<div class="two">
+<input type="date" id="xDate">
+<input type="number" id="xAmt" min="0" step="any" inputmode="decimal" placeholder="المبلغ">
+</div>
+<button data-act="addExp" style="margin-bottom:0">➕ إضافة صرفية</button>
+</div>
+
+<div class="elist" id="eList"></div>
+</div>
+
+<!-- إدارة المستخدمين -->
 <div class="card" id="vSettings" style="display:none;text-align:right">
 <h2 style="color:var(--prl);text-align:center;margin-top:0">إدارة المستخدمين</h2>
 <input type="text" id="nUser" placeholder="يوزر جديد" autocomplete="off">
@@ -145,7 +199,7 @@ input,select,button,textarea{font-size:16px}.lcard{padding:30px 20px 22px}}
 <select id="nRole"><option value="viewer">مُشاهد (قراءة فقط)</option><option value="admin">مدير (تحكم كامل)</option></select>
 <button data-act="addUser">حفظ المستخدم</button>
 <div id="ulist" style="max-height:120px;overflow-y:auto;margin-top:10px"></div>
-<button class="sec" data-act="view" data-tab="countdown" style="margin-top:10px">العودة</button>
+<button class="sec" data-act="home" style="margin-top:10px">العودة للرئيسية</button>
 </div>
 </div>
 
@@ -167,35 +221,55 @@ const db = getFirestore(initializeApp(firebaseConfig));
 // ===== النسخة التجريبية: بيانات منفصلة عن الموقع الأصلي =====
 const usersRef = doc(db, 'app', 'users_test');
 const profilesRef = doc(db, 'app', 'profiles_test');
+const expensesRef = doc(db, 'app', 'expenses_test');
 const SESSION_KEY = 'current_logged_user_test';
+const CUR = 'د.ع'; // العملة (غيّرها إذا تريد)
 
 const $ = id => document.getElementById(id);
 const pad = n => String(n).padStart(2, '0');
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = n => Number(n).toLocaleString('en-US', { maximumFractionDigits: 2 });
 
-// ===== العد التنازلي: ينقص يوم عند 12 بالليل =====
+// ===== التواريخ =====
 const today = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
+const monthKey = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
+const monthName = k => { const [y, m] = k.split('-').map(Number); return new Date(y, m - 1, 1).toLocaleDateString('ar-IQ', { month: 'long' }) + ' ' + y; };
 const dn = k => { const [y, m, d] = k.split('-').map(Number); return Date.UTC(y, m - 1, d) / 86400000; };
+const fmtDate = d => `${d.toLocaleDateString('ar-IQ', { weekday: 'long' })} ${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
+const fmtISO = s => { const [y, m, d] = s.split('-').map(Number); return fmtDate(new Date(y, m - 1, d)); };
+
+// ===== الاشتراكات: ينقص يوم عند 12 بالليل =====
 const total = p => p.maxDays ?? p.days;
 const left = p => Math.max(0, total(p) - Math.max(0, dn(today()) - dn(p.start || today())));
 const cls = d => d > 20 ? 'g' : d > 10 ? 'y' : 'r';
 const barColor = { g: '#10b981', y: '#f59e0b', r: '#ef4444' };
-const fmtDate = d => `${d.toLocaleDateString('ar-IQ', { weekday: 'long' })} ${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
-
-// تاريخ الانتهاء = تاريخ البداية + عدد الأيام
 function endText(p) {
   const [y, m, d] = (p.start || today()).split('-').map(Number);
   const e = new Date(y, m - 1, d + total(p));
   return (left(p) <= 0 ? 'انتهى الاشتراك يوم ' : 'ينتهي يوم ') + fmtDate(e);
 }
 
-let accounts = null, data = null, user = null, current = null, tab = 'countdown', panelOpen = false;
+// ===== الصرفيات =====
+const monthItems = k => (exps || []).filter(e => e.date.startsWith(k)).sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+const sum = items => items.reduce((s, e) => s + e.amount, 0);
+
+let accounts = null, data = null, exps = null;
+let user = null, current = null, tab = 'countdown', panelOpen = false;
+let section = 'home';              // home | subs | exp | settings
+let curMonth = monthKey(new Date());
 try { user = JSON.parse(localStorage.getItem(SESSION_KEY))?.username || null; } catch (e) {}
 const isAdmin = () => !!(accounts && user && accounts[user]?.role === 'admin');
 
 const saveData = () => setDoc(profilesRef, { data }).catch(showError);
 const saveUsers = () => setDoc(usersRef, { accounts }).catch(showError);
-function showError(e) { console.error(e); $('err').textContent = 'خطأ بالاتصال بقاعدة البيانات: ' + (e.code || e.message); }
+const saveExps = () => setDoc(expensesRef, { list: exps }).catch(showError);
+let errShown = false;
+function showError(e) {
+  console.error(e);
+  const msg = 'خطأ بالاتصال بقاعدة البيانات: ' + (e.code || e.message);
+  $('err').textContent = msg;
+  if (user && !errShown) { errShown = true; alert(msg); }
+}
 
 onSnapshot(usersRef, snap => {
   if (snap.exists()) accounts = snap.data().accounts;
@@ -213,7 +287,12 @@ onSnapshot(profilesRef, snap => {
   render();
 }, showError);
 
-// ===== الساعة الحية (كل ثانية) + تحديث الأيام لو تغيّر اليوم =====
+onSnapshot(expensesRef, snap => {
+  exps = snap.exists() ? (snap.data().list || []) : [];
+  render();
+}, showError);
+
+// ===== الساعة الحية =====
 let lastDay = today();
 function tick() {
   const n = new Date();
@@ -225,13 +304,14 @@ function tick() {
 }
 setInterval(tick, 1000);
 tick();
+$('xDate').value = today();
 
 function login() {
   const u = $('lu').value.trim(), p = $('lp').value.trim();
   if (!accounts) { $('err').textContent = 'جاري الاتصال بقاعدة البيانات، حاول بعد ثواني...'; return; }
   if (!u || !p) { $('err').textContent = 'أدخل اسم المستخدم وكلمة المرور'; return; }
   if (accounts[u] && String(accounts[u].pass) === p) {
-    user = u; panelOpen = false;
+    user = u; section = 'home'; panelOpen = false;
     localStorage.setItem(SESSION_KEY, JSON.stringify({ username: u }));
     $('err').textContent = ''; $('lp').value = '';
     render();
@@ -243,53 +323,95 @@ function render() {
   if (!user || !accounts[user]) { $('login').style.display = 'flex'; return; }
   $('login').style.display = 'none';
   const adm = isAdmin();
-  if (!adm) { tab = 'countdown'; panelOpen = false; }
-  const showPanel = adm && tab === 'countdown' && panelOpen;
+  if (!adm) { if (section === 'settings') section = 'home'; tab = 'countdown'; panelOpen = false; }
+  const inSubs = section === 'subs', inExp = section === 'exp';
+  const showPanel = adm && inSubs && tab === 'countdown' && panelOpen;
 
-  $('vCount').style.display = tab === 'countdown' ? 'block' : 'none';
-  $('vCreate').style.display = adm && tab === 'create' ? 'block' : 'none';
-  $('vSettings').style.display = adm && tab === 'settings' ? 'block' : 'none';
+  // إظهار وإخفاء الأقسام
+  $('sidebar').style.display = (inSubs || inExp) ? 'flex' : 'none';
+  $('vHome').style.display = section === 'home' ? 'block' : 'none';
+  $('vCount').style.display = inSubs && tab === 'countdown' ? 'block' : 'none';
+  $('vCreate').style.display = inSubs && adm && tab === 'create' ? 'block' : 'none';
+  $('vExp').style.display = inExp ? 'block' : 'none';
+  $('vSettings').style.display = section === 'settings' && adm ? 'block' : 'none';
   $('adminBox').style.display = showPanel ? 'block' : 'none';
   $('clockBox').style.display = showPanel ? 'none' : 'block';
-  $('adminMenu').style.display = adm ? 'flex' : 'none';
+  $('adminMenu').style.display = inSubs && adm ? 'flex' : 'none';
+  $('homeSet').style.display = adm ? 'inline-block' : 'none';
+  $('eAdd').style.display = adm ? 'block' : 'none';
+  $('sideTitle').textContent = inExp ? 'الصرفيات' : 'الاشتراكات';
 
+  // ----- الرئيسية: ملخص المربعات -----
+  $('hello').innerHTML = `مرحباً، <b>${esc(user)}</b>`;
+  const names = Object.keys(data), soon = names.filter(n => left(data[n]) <= 10).length;
+  $('sumSubs').innerHTML = `${names.length} اشتراك` + (soon ? `<br><span style="color:#fbbf24">⚠️ ${soon} ينتهي قريباً</span>` : '');
+  const cm = monthKey(new Date());
+  $('sumExp').innerHTML = `${esc(monthName(cm))}<br><b style="color:#fbbf24">${fmt(sum(monthItems(cm)))} ${CUR}</b>`;
+
+  // ----- المستخدمون -----
   if (adm) $('ulist').innerHTML = Object.keys(accounts).map(u =>
     `<div class="item"><span><b>${esc(u)}</b> (${esc(accounts[u].role)})</span>` +
     (u !== 'admin'
       ? `<button class="dng" data-act="delUser" data-name="${esc(u)}" style="width:auto;padding:2px 8px;margin:0">حذف</button>`
       : '<span style="font-size:11px;color:var(--mut)">رئيسي</span>') + '</div>').join('');
 
-  $('list').innerHTML = Object.keys(data).map(n => {
-    const l = left(data[n]);
-    return `<div class="item ${n === current && tab === 'countdown' ? 'active' : ''}" data-act="sel" data-name="${esc(n)}"><span style="font-weight:500">${esc(n)}</span><span class="badge ${cls(l)}">${l} يوم</span></div>`;
-  }).join('');
+  // ----- القائمة الجانبية -----
+  if (inSubs) {
+    $('list').innerHTML = Object.keys(data).map(n => {
+      const l = left(data[n]);
+      return `<div class="item ${n === current && tab === 'countdown' ? 'active' : ''}" data-act="sel" data-name="${esc(n)}"><span style="font-weight:500">${esc(n)}</span><span class="badge ${cls(l)}">${l} يوم</span></div>`;
+    }).join('');
+  } else if (inExp) {
+    const ms = new Set((exps || []).map(e => e.date.slice(0, 7)));
+    ms.add(monthKey(new Date())); ms.add(curMonth);
+    $('list').innerHTML = [...ms].sort().reverse().map(m =>
+      `<div class="item ${m === curMonth ? 'active' : ''}" data-act="selMonth" data-m="${m}"><span style="font-weight:500">${esc(monthName(m))}</span><span class="badge n">${fmt(sum(monthItems(m)))}</span></div>`).join('');
+  }
 
+  // ----- الاشتراك المختار -----
   const p = data[current];
   if (p) {
     const l = left(p), t = total(p), passed = t - l;
     $('days').textContent = l;
-    // شريط التقدم
     $('progBar').style.width = (t > 0 ? Math.min(100, passed / t * 100) : 0) + '%';
     $('progBar').style.background = barColor[cls(l)];
     $('progTxt').textContent = `مضى ${passed} من ${t} يوم`;
     $('endTxt').textContent = endText(p);
-    // النص تحت الأيام
     const note = (p.note || '').trim();
     $('noteView').textContent = note;
     $('noteView').style.display = note ? 'block' : 'none';
-    // لوحة التعديل
     $('pName').textContent = current;
     if (document.activeElement !== $('dIn')) $('dIn').value = t;
     if (document.activeElement !== $('noteIn')) $('noteIn').value = p.note || '';
+  }
+
+  // ----- الصرفيات: مجموع الشهر + القائمة -----
+  if (inExp) {
+    const items = monthItems(curMonth);
+    $('eMonth').textContent = monthName(curMonth);
+    $('eTotal').textContent = fmt(sum(items));
+    $('eCur').textContent = CUR;
+    $('eCount').textContent = items.length ? `${items.length} صرفية خلال الشهر` : 'لا توجد صرفيات بهذا الشهر';
+    $('eList').innerHTML = items.length ? items.map(e =>
+      `<div class="erow"><div class="e-main"><b>${esc(e.name)}</b><span>${esc(fmtISO(e.date))}</span></div><div class="e-amt">${fmt(e.amount)} ${CUR}</div>` +
+      (adm ? `<button class="dng" data-act="delExp" data-id="${e.id}" aria-label="حذف">✕</button>` : '') + '</div>').join('')
+      : '<div class="empty">ما توجد صرفيات لهذا الشهر بعد</div>';
   }
 }
 
 const act = {
   login,
   eye(el) { const i = $('lp'); i.type = i.type === 'password' ? 'text' : 'password'; el.textContent = i.type === 'password' ? '👁️' : '🙈'; },
-  logout() { localStorage.removeItem(SESSION_KEY); user = null; tab = 'countdown'; panelOpen = false; render(); },
+  logout() { localStorage.removeItem(SESSION_KEY); user = null; section = 'home'; tab = 'countdown'; panelOpen = false; render(); },
+  home() { section = 'home'; tab = 'countdown'; panelOpen = false; render(); },
+  open(el) {
+    section = el.dataset.sec; tab = 'countdown'; panelOpen = false;
+    if (section === 'exp') curMonth = monthKey(new Date());
+    render();
+  },
   view(el) { tab = el.dataset.tab; panelOpen = false; render(); },
-  // الضغط على الاشتراك: يفتح لوحة التعديل، والضغط عليه مرة ثانية يسكرها
+
+  // --- الاشتراكات ---
   sel(el) {
     const n = el.dataset.name;
     if (isAdmin() && tab === 'countdown' && current === n) panelOpen = !panelOpen;
@@ -327,6 +449,26 @@ const act = {
     current = n; $('nName').value = ''; $('nNote').value = ''; tab = 'countdown'; panelOpen = false;
     saveData(); render();
   },
+
+  // --- الصرفيات ---
+  selMonth(el) { curMonth = el.dataset.m; render(); },
+  addExp() {
+    if (!isAdmin()) return;
+    const name = $('xName').value.trim(), date = $('xDate').value, amt = parseFloat($('xAmt').value);
+    if (!name || !date || isNaN(amt) || amt < 0) return alert('أدخل الاسم والتاريخ والمبلغ بشكل صحيح');
+    if (exps === null) return alert('جاري تحميل البيانات، حاول بعد ثواني');
+    exps.push({ id: Date.now(), name, date, amount: amt });
+    curMonth = date.slice(0, 7);
+    $('xName').value = ''; $('xAmt').value = '';
+    saveExps(); render(); $('xName').focus();
+  },
+  delExp(el) {
+    if (!isAdmin()) return;
+    const id = Number(el.dataset.id);
+    if (confirm('حذف هذي الصرفية؟')) { exps = exps.filter(e => e.id !== id); saveExps(); render(); }
+  },
+
+  // --- المستخدمون ---
   addUser() {
     const u = $('nUser').value.trim(), p = $('nPass').value.trim();
     if (!u || !p) return alert('أدخل اليوزر والباسورد');
@@ -347,6 +489,7 @@ document.addEventListener('click', e => {
   if (el && act[el.dataset.act]) act[el.dataset.act](el);
 });
 ['lu', 'lp'].forEach(id => $(id).addEventListener('keydown', e => { if (e.key === 'Enter') login(); }));
+['xName', 'xAmt'].forEach(id => $(id).addEventListener('keydown', e => { if (e.key === 'Enter') act.addExp(); }));
 </script>
 </body>
 </html>
