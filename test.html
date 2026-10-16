@@ -24,7 +24,7 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;color:#f8fafc;margi
 .lbtn{margin:8px 0 0;padding:14px;font-size:15px}
 #err{min-height:20px;margin-top:14px;font-size:13px;color:#f87171}
 
-/* ===== الشاشة الرئيسية (المربعات) ===== */
+/* ===== الشاشة الرئيسية ===== */
 .home{width:100%;max-width:560px;text-align:center}
 .home h1{font-size:28px;margin:0 0 4px}
 .hello{color:var(--mut);font-size:14px;margin-bottom:26px}
@@ -51,25 +51,20 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;color:#f8fafc;margi
 .big{font-size:60px;font-weight:800;color:#10b981;margin:6px 0 12px;text-shadow:0 0 30px rgba(16,185,129,.35)}
 .big.amber{color:#fbbf24;text-shadow:0 0 30px rgba(251,191,36,.35);margin:6px 0 4px}
 .big small{font-size:18px;font-weight:600;color:var(--mut)}
-
 .prog{height:8px;border-radius:99px;background:rgba(148,163,184,.18);overflow:hidden;margin:0 0 8px}
 .prog i{display:block;height:100%;border-radius:99px;transition:width .6s ease,background .3s}
 .prog-txt{font-size:12px;color:var(--mut)}
 .end{font-size:13px;color:var(--prl);margin:8px 0 14px}
 .note-view{display:none;margin:6px 0 4px;padding:14px 18px;text-align:center;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.28);border-radius:16px;font-size:16px;line-height:1.8;color:#e2e8f0;white-space:pre-wrap;word-break:break-word}
-
 .clock{margin-top:18px;padding-top:16px;border-top:1px solid var(--gbd)}
 .c-day{font-size:22px;font-weight:700;color:var(--prl)}
 .c-date{font-size:15px;color:var(--mut);margin:2px 0 8px}
 .c-time{font-size:36px;font-weight:700;letter-spacing:1px;font-variant-numeric:tabular-nums}
 .c-time small{font-size:16px;font-weight:600;color:var(--mut);margin-right:6px}
-
 .admin-box{display:none;position:relative;margin-top:18px;text-align:right;background:rgba(11,15,25,.45);border:1px solid var(--gbd);padding:14px;border-radius:16px}
 .ab-head{font-size:14px;color:var(--mut);margin:0 0 12px;padding-left:44px}
 .ab-head b{color:#fff}
 .x{position:absolute;left:10px;top:10px;width:auto;margin:0;padding:4px 11px;font-size:14px;line-height:1.4}
-
-/* الصرفيات */
 .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .elist{max-height:340px;overflow-y:auto;margin-top:14px}
 .erow{display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(15,23,42,.45);border:1px solid var(--gbd);border-radius:12px;margin-bottom:8px;text-align:right}
@@ -79,6 +74,7 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;color:#f8fafc;margi
 .e-amt{font-weight:700;color:#fbbf24;white-space:nowrap;font-variant-numeric:tabular-nums}
 .erow button{width:auto;margin:0;padding:3px 9px;font-size:13px}
 .empty{color:var(--mut);font-size:13px;padding:14px 0}
+.hint{font-size:12px;color:var(--mut);margin:-2px 0 10px;line-height:1.7}
 
 input,select,button,textarea{width:100%;padding:12px 14px;margin-bottom:10px;background:rgba(11,15,25,.7);border:1px solid var(--bd);color:#fff;border-radius:12px;box-sizing:border-box;font-size:14px;font-family:inherit;transition:border-color .2s,box-shadow .2s,transform .15s}
 textarea{min-height:80px;resize:vertical;line-height:1.6}
@@ -87,6 +83,7 @@ option{background:#0b0f19}
 button{background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;cursor:pointer;font-weight:600;box-shadow:0 8px 22px rgba(99,102,241,.35)}
 button:hover{background:linear-gradient(135deg,#4f46e5,#7c3aed);transform:translateY(-1px);box-shadow:0 12px 28px rgba(99,102,241,.45)}
 button:active{transform:none}
+button:disabled{opacity:.6;cursor:wait}
 .sec{background:rgba(51,65,85,.75);box-shadow:none}.sec:hover{background:rgba(71,85,105,.85);box-shadow:none}
 .dng{background:linear-gradient(135deg,#ef4444,#dc2626);box-shadow:0 8px 22px rgba(239,68,68,.3)}.dng:hover{background:linear-gradient(135deg,#dc2626,#b91c1c);box-shadow:0 12px 28px rgba(239,68,68,.4)}
 @media(max-width:768px){
@@ -101,10 +98,10 @@ input,select,button,textarea{font-size:16px}.lcard{padding:30px 20px 22px}}
 
 <div class="test-badge">🧪 نسخة تجريبية</div>
 
-<div id="login"><div class="lcard">
+<div id="login"><div class="lcard" id="lcard" style="visibility:hidden">
 <div class="logo"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
 <h2>مرحباً بك</h2><div class="sub">سجّل دخولك للمتابعة</div>
-<div class="field"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><input type="text" id="lu" placeholder="اسم المستخدم" autocomplete="username"></div>
+<div class="field"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><input type="text" id="lu" placeholder="اسم المستخدم" autocomplete="username" autocapitalize="none" spellcheck="false"></div>
 <div class="field"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><input type="password" id="lp" placeholder="كلمة المرور" autocomplete="current-password"><button type="button" class="eye" data-act="eye" aria-label="إظهار كلمة المرور">👁️</button></div>
 <button class="lbtn" data-act="login">دخول</button>
 <div id="err"></div>
@@ -122,7 +119,6 @@ input,select,button,textarea{font-size:16px}.lcard{padding:30px 20px 22px}}
 
 <div class="main">
 
-<!-- الشاشة الرئيسية -->
 <div class="home" id="vHome">
 <h1>🏠 الرئيسية</h1>
 <div class="hello" id="hello"></div>
@@ -136,7 +132,6 @@ input,select,button,textarea{font-size:16px}.lcard{padding:30px 20px 22px}}
 </div>
 </div>
 
-<!-- الاشتراكات -->
 <div class="card" id="vCount">
 <div style="color:var(--mut);font-size:14px">الأيام المتبقية</div>
 <div class="big" id="days">0</div>
@@ -172,7 +167,6 @@ input,select,button,textarea{font-size:16px}.lcard{padding:30px 20px 22px}}
 <button class="sec" data-act="view" data-tab="countdown">إلغاء</button>
 </div>
 
-<!-- الصرفيات -->
 <div class="card" id="vExp" style="display:none">
 <div style="color:var(--mut);font-size:14px">مجموع الصرفيات خلال شهر</div>
 <h2 id="eMonth" style="color:var(--prl);margin:4px 0 0"></h2>
@@ -191,21 +185,22 @@ input,select,button,textarea{font-size:16px}.lcard{padding:30px 20px 22px}}
 <div class="elist" id="eList"></div>
 </div>
 
-<!-- إدارة المستخدمين -->
 <div class="card" id="vSettings" style="display:none;text-align:right">
 <h2 style="color:var(--prl);text-align:center;margin-top:0">إدارة المستخدمين</h2>
-<input type="text" id="nUser" placeholder="يوزر جديد" autocomplete="off">
-<input type="password" id="nPass" placeholder="كلمة المرور" autocomplete="new-password">
+<input type="text" id="nUser" placeholder="اسم المستخدم (إنجليزي)" autocomplete="off" autocapitalize="none" spellcheck="false">
+<input type="password" id="nPass" placeholder="كلمة المرور (6 خانات على الأقل)" autocomplete="new-password">
 <select id="nRole"><option value="viewer">مُشاهد (قراءة فقط)</option><option value="admin">مدير (تحكم كامل)</option></select>
-<button data-act="addUser">حفظ المستخدم</button>
-<div id="ulist" style="max-height:120px;overflow-y:auto;margin-top:10px"></div>
+<div class="hint">اسم المستخدم: حروف إنجليزية صغيرة وأرقام فقط (3 إلى 20).</div>
+<button data-act="addUser" id="addUserBtn">حفظ المستخدم</button>
+<div id="ulist" style="max-height:180px;overflow-y:auto;margin-top:10px"></div>
 <button class="sec" data-act="home" style="margin-top:10px">العودة للرئيسية</button>
 </div>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBraw98K7uLeQ5p7xmgn88x2jczO2EtzXM",
@@ -216,14 +211,19 @@ const firebaseConfig = {
   appId: "1:117069348206:web:1d8e3c9c365557d02b557f"
 };
 
-const db = getFirestore(initializeApp(firebaseConfig));
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+// تطبيق ثانوي فقط لإنشاء حسابات جديدة بدون ما يطلع المدير من حسابه
+const auth2 = getAuth(initializeApp(firebaseConfig, 'secondary'));
 
-// ===== النسخة التجريبية: بيانات منفصلة عن الموقع الأصلي =====
-const usersRef = doc(db, 'app', 'users_test');
+// ===== بيانات النسخة التجريبية =====
 const profilesRef = doc(db, 'app', 'profiles_test');
 const expensesRef = doc(db, 'app', 'expenses_test');
-const SESSION_KEY = 'current_logged_user_test';
-const CUR = 'د.ع'; // العملة (غيّرها إذا تريد)
+const membersCol = collection(db, 'members');
+const EMAIL_DOMAIN = 'jawharat.app';
+const toEmail = u => `${u}@${EMAIL_DOMAIN}`;
+const CUR = 'د.ع';
 
 const $ = id => document.getElementById(id);
 const pad = n => String(n).padStart(2, '0');
@@ -238,7 +238,7 @@ const dn = k => { const [y, m, d] = k.split('-').map(Number); return Date.UTC(y,
 const fmtDate = d => `${d.toLocaleDateString('ar-IQ', { weekday: 'long' })} ${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
 const fmtISO = s => { const [y, m, d] = s.split('-').map(Number); return fmtDate(new Date(y, m - 1, d)); };
 
-// ===== الاشتراكات: ينقص يوم عند 12 بالليل =====
+// ===== الاشتراكات =====
 const total = p => p.maxDays ?? p.days;
 const left = p => Math.max(0, total(p) - Math.max(0, dn(today()) - dn(p.start || today())));
 const cls = d => d > 20 ? 'g' : d > 10 ? 'y' : 'r';
@@ -253,44 +253,92 @@ function endText(p) {
 const monthItems = k => (exps || []).filter(e => e.date.startsWith(k)).sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
 const sum = items => items.reduce((s, e) => s + e.amount, 0);
 
-let accounts = null, data = null, exps = null;
-let user = null, current = null, tab = 'countdown', panelOpen = false;
-let section = 'home';              // home | subs | exp | settings
+// ===== الحالة =====
+let me = null;                 // { uid, name, role } بعد تسجيل الدخول
+let authReady = false;
+let data = null, exps = null, members = [];
+let current = null, tab = 'countdown', panelOpen = false, section = 'home';
 let curMonth = monthKey(new Date());
-try { user = JSON.parse(localStorage.getItem(SESSION_KEY))?.username || null; } catch (e) {}
-const isAdmin = () => !!(accounts && user && accounts[user]?.role === 'admin');
+let unsubs = [];
+const isAdmin = () => me?.role === 'admin';
 
 const saveData = () => setDoc(profilesRef, { data }).catch(showError);
-const saveUsers = () => setDoc(usersRef, { accounts }).catch(showError);
 const saveExps = () => setDoc(expensesRef, { list: exps }).catch(showError);
-let errShown = false;
+
+let alerted = false;
 function showError(e) {
   console.error(e);
   const msg = 'خطأ بالاتصال بقاعدة البيانات: ' + (e.code || e.message);
   $('err').textContent = msg;
-  if (user && !errShown) { errShown = true; alert(msg); }
+  if (me && data === null) signOut(auth);          // فشل تحميل البيانات: رجّعه لصفحة الدخول مع الرسالة
+  else if (!alerted) { alerted = true; alert(msg); }
 }
 
-onSnapshot(usersRef, snap => {
-  if (snap.exists()) accounts = snap.data().accounts;
-  else { accounts = { admin: { pass: '1234', role: 'admin', name: 'المدير الأساسي' } }; saveUsers(); }
-  render();
-}, showError);
+// ===== الاستماع للبيانات (يبدأ بعد تسجيل الدخول فقط) =====
+function startListeners() {
+  stopListeners();
+  unsubs.push(onSnapshot(profilesRef, snap => {
+    if (snap.exists()) data = snap.data().data || {};
+    else {
+      data = {};
+      if (isAdmin()) { data = { 'الهدف الأساسي': { days: 92, maxDays: 92, start: today(), note: '' } }; saveData(); }
+    }
+    if (isAdmin()) {
+      let ch = false;
+      for (const n in data) if (!data[n].start) { data[n].start = today(); ch = true; }
+      if (ch) saveData();
+    }
+    if (!current || !data[current]) current = Object.keys(data)[0] || null;
+    render();
+  }, showError));
+  unsubs.push(onSnapshot(expensesRef, snap => {
+    exps = snap.exists() ? (snap.data().list || []) : [];
+    render();
+  }, showError));
+  if (isAdmin()) unsubs.push(onSnapshot(membersCol, snap => {
+    members = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    render();
+  }, showError));
+}
+function stopListeners() {
+  unsubs.forEach(f => f()); unsubs = [];
+  data = null; exps = null; members = []; current = null;
+}
 
-onSnapshot(profilesRef, snap => {
-  if (snap.exists()) data = snap.data().data;
-  else { data = { 'الهدف الأساسي': { days: 92, maxDays: 92, start: today(), note: '' } }; saveData(); }
-  let changed = false;
-  for (const n in data) if (!data[n].start) { data[n].start = today(); changed = true; }
-  if (changed) saveData();
-  if (!current || !data[current]) current = Object.keys(data)[0];
-  render();
-}, showError);
+// ===== حالة تسجيل الدخول =====
+onAuthStateChanged(auth, async u => {
+  if (!u) {
+    stopListeners(); me = null; authReady = true; section = 'home'; tab = 'countdown'; panelOpen = false;
+    render(); return;
+  }
+  try {
+    const m = await getDoc(doc(db, 'members', u.uid));
+    if (!m.exists()) {
+      $('err').textContent = 'حسابك غير مفعّل بالنظام، تواصل مع المدير';
+      await signOut(auth); return;
+    }
+    me = { uid: u.uid, ...m.data() };
+    authReady = true; section = 'home';
+    startListeners(); render();
+  } catch (e) { showError(e); await signOut(auth); }
+});
 
-onSnapshot(expensesRef, snap => {
-  exps = snap.exists() ? (snap.data().list || []) : [];
-  render();
-}, showError);
+const authMsg = e => ({
+  'auth/invalid-credential': 'اسم المستخدم أو كلمة المرور غير صحيحة!',
+  'auth/wrong-password': 'اسم المستخدم أو كلمة المرور غير صحيحة!',
+  'auth/user-not-found': 'اسم المستخدم أو كلمة المرور غير صحيحة!',
+  'auth/invalid-email': 'اسم المستخدم غير صالح',
+  'auth/too-many-requests': 'محاولات كثيرة، انتظر قليلاً وحاول مرة ثانية',
+  'auth/network-request-failed': 'تأكد من اتصال الإنترنت'
+}[e.code] || 'تعذّر تسجيل الدخول: ' + (e.code || e.message));
+
+async function login() {
+  const u = $('lu').value.trim().toLowerCase(), p = $('lp').value;
+  if (!u || !p) { $('err').textContent = 'أدخل اسم المستخدم وكلمة المرور'; return; }
+  $('err').textContent = 'جاري الدخول...';
+  try { await signInWithEmailAndPassword(auth, toEmail(u), p); $('lp').value = ''; }
+  catch (e) { $('err').textContent = authMsg(e); }
+}
 
 // ===== الساعة الحية =====
 let lastDay = today();
@@ -306,28 +354,17 @@ setInterval(tick, 1000);
 tick();
 $('xDate').value = today();
 
-function login() {
-  const u = $('lu').value.trim(), p = $('lp').value.trim();
-  if (!accounts) { $('err').textContent = 'جاري الاتصال بقاعدة البيانات، حاول بعد ثواني...'; return; }
-  if (!u || !p) { $('err').textContent = 'أدخل اسم المستخدم وكلمة المرور'; return; }
-  if (accounts[u] && String(accounts[u].pass) === p) {
-    user = u; section = 'home'; panelOpen = false;
-    localStorage.setItem(SESSION_KEY, JSON.stringify({ username: u }));
-    $('err').textContent = ''; $('lp').value = '';
-    render();
-  } else $('err').textContent = 'اسم المستخدم أو كلمة المرور غير صحيحة!';
-}
-
 function render() {
-  if (!accounts || !data) return;
-  if (!user || !accounts[user]) { $('login').style.display = 'flex'; return; }
+  const loading = !authReady || (me && data === null);
+  $('lcard').style.visibility = loading ? 'hidden' : 'visible';
+  if (loading || !me) { $('login').style.display = 'flex'; return; }
   $('login').style.display = 'none';
+
   const adm = isAdmin();
   if (!adm) { if (section === 'settings') section = 'home'; tab = 'countdown'; panelOpen = false; }
   const inSubs = section === 'subs', inExp = section === 'exp';
-  const showPanel = adm && inSubs && tab === 'countdown' && panelOpen;
+  const showPanel = adm && inSubs && tab === 'countdown' && panelOpen && !!current;
 
-  // إظهار وإخفاء الأقسام
   $('sidebar').style.display = (inSubs || inExp) ? 'flex' : 'none';
   $('vHome').style.display = section === 'home' ? 'block' : 'none';
   $('vCount').style.display = inSubs && tab === 'countdown' ? 'block' : 'none';
@@ -341,26 +378,26 @@ function render() {
   $('eAdd').style.display = adm ? 'block' : 'none';
   $('sideTitle').textContent = inExp ? 'الصرفيات' : 'الاشتراكات';
 
-  // ----- الرئيسية: ملخص المربعات -----
-  $('hello').innerHTML = `مرحباً، <b>${esc(user)}</b>`;
+  // الرئيسية
+  $('hello').innerHTML = `مرحباً، <b>${esc(me.name)}</b>`;
   const names = Object.keys(data), soon = names.filter(n => left(data[n]) <= 10).length;
   $('sumSubs').innerHTML = `${names.length} اشتراك` + (soon ? `<br><span style="color:#fbbf24">⚠️ ${soon} ينتهي قريباً</span>` : '');
   const cm = monthKey(new Date());
   $('sumExp').innerHTML = `${esc(monthName(cm))}<br><b style="color:#fbbf24">${fmt(sum(monthItems(cm)))} ${CUR}</b>`;
 
-  // ----- المستخدمون -----
-  if (adm) $('ulist').innerHTML = Object.keys(accounts).map(u =>
-    `<div class="item"><span><b>${esc(u)}</b> (${esc(accounts[u].role)})</span>` +
-    (u !== 'admin'
-      ? `<button class="dng" data-act="delUser" data-name="${esc(u)}" style="width:auto;padding:2px 8px;margin:0">حذف</button>`
-      : '<span style="font-size:11px;color:var(--mut)">رئيسي</span>') + '</div>').join('');
+  // المستخدمون
+  if (adm) $('ulist').innerHTML = members.map(m =>
+    `<div class="item"><span><b>${esc(m.name)}</b> (${m.role === 'admin' ? 'مدير' : 'مُشاهد'})</span>` +
+    (m.id !== me.uid
+      ? `<button class="dng" data-act="delUser" data-id="${esc(m.id)}" data-name="${esc(m.name)}" style="width:auto;padding:2px 8px;margin:0">حذف</button>`
+      : '<span style="font-size:11px;color:var(--mut)">أنت</span>') + '</div>').join('');
 
-  // ----- القائمة الجانبية -----
+  // القائمة الجانبية
   if (inSubs) {
-    $('list').innerHTML = Object.keys(data).map(n => {
+    $('list').innerHTML = names.length ? names.map(n => {
       const l = left(data[n]);
       return `<div class="item ${n === current && tab === 'countdown' ? 'active' : ''}" data-act="sel" data-name="${esc(n)}"><span style="font-weight:500">${esc(n)}</span><span class="badge ${cls(l)}">${l} يوم</span></div>`;
-    }).join('');
+    }).join('') : '<div class="empty" style="text-align:center">لا توجد اشتراكات</div>';
   } else if (inExp) {
     const ms = new Set((exps || []).map(e => e.date.slice(0, 7)));
     ms.add(monthKey(new Date())); ms.add(curMonth);
@@ -368,8 +405,8 @@ function render() {
       `<div class="item ${m === curMonth ? 'active' : ''}" data-act="selMonth" data-m="${m}"><span style="font-weight:500">${esc(monthName(m))}</span><span class="badge n">${fmt(sum(monthItems(m)))}</span></div>`).join('');
   }
 
-  // ----- الاشتراك المختار -----
-  const p = data[current];
+  // الاشتراك المختار
+  const p = current && data[current];
   if (p) {
     const l = left(p), t = total(p), passed = t - l;
     $('days').textContent = l;
@@ -383,9 +420,12 @@ function render() {
     $('pName').textContent = current;
     if (document.activeElement !== $('dIn')) $('dIn').value = t;
     if (document.activeElement !== $('noteIn')) $('noteIn').value = p.note || '';
+  } else {
+    $('days').textContent = '—'; $('progBar').style.width = '0';
+    $('progTxt').textContent = ''; $('endTxt').textContent = ''; $('noteView').style.display = 'none';
   }
 
-  // ----- الصرفيات: مجموع الشهر + القائمة -----
+  // الصرفيات
   if (inExp) {
     const items = monthItems(curMonth);
     $('eMonth').textContent = monthName(curMonth);
@@ -402,7 +442,7 @@ function render() {
 const act = {
   login,
   eye(el) { const i = $('lp'); i.type = i.type === 'password' ? 'text' : 'password'; el.textContent = i.type === 'password' ? '👁️' : '🙈'; },
-  logout() { localStorage.removeItem(SESSION_KEY); user = null; section = 'home'; tab = 'countdown'; panelOpen = false; render(); },
+  logout() { $('err').textContent = ''; signOut(auth); },
   home() { section = 'home'; tab = 'countdown'; panelOpen = false; render(); },
   open(el) {
     section = el.dataset.sec; tab = 'countdown'; panelOpen = false;
@@ -420,17 +460,19 @@ const act = {
   },
   closePanel() { panelOpen = false; render(); },
   setDays() {
-    const v = parseInt($('dIn').value); if (isNaN(v)) return;
+    const v = parseInt($('dIn').value); if (isNaN(v) || !current) return;
     data[current] = { ...data[current], days: v, maxDays: v, start: today() };
     saveData(); render();
   },
   saveNote(el) {
+    if (!current) return;
     data[current].note = $('noteIn').value.trim();
     saveData(); render();
     el.textContent = 'تم الحفظ ✓';
     setTimeout(() => { el.textContent = 'حفظ النص'; }, 1500);
   },
   rename() {
+    if (!current) return;
     let n = prompt('الاسم الجديد للاشتراك:', current);
     if (!n || !n.trim()) return; n = n.trim();
     if (data[n]) return alert('الاسم موجود مسبقاً');
@@ -438,8 +480,8 @@ const act = {
     saveData(); render();
   },
   delP() {
-    if (Object.keys(data).length <= 1) return alert('لا يمكنك حذف الاشتراك الوحيد');
-    if (confirm(`حذف اشتراك ${current}؟`)) { delete data[current]; current = Object.keys(data)[0]; panelOpen = false; saveData(); render(); }
+    if (!current) return;
+    if (confirm(`حذف اشتراك ${current}؟`)) { delete data[current]; current = Object.keys(data)[0] || null; panelOpen = false; saveData(); render(); }
   },
   create() {
     const n = $('nName').value.trim(), d = parseInt($('nDays').value);
@@ -468,19 +510,32 @@ const act = {
     if (confirm('حذف هذي الصرفية؟')) { exps = exps.filter(e => e.id !== id); saveExps(); render(); }
   },
 
-  // --- المستخدمون ---
-  addUser() {
-    const u = $('nUser').value.trim(), p = $('nPass').value.trim();
-    if (!u || !p) return alert('أدخل اليوزر والباسورد');
-    if (accounts[u]) return alert('المستخدم موجود مسبقاً!');
-    accounts[u] = { pass: p, role: $('nRole').value, name: u };
-    $('nUser').value = ''; $('nPass').value = '';
-    saveUsers(); alert('تم حفظ المستخدم بنجاح!'); render();
+  // --- المستخدمون (للمدير فقط) ---
+  async addUser() {
+    if (!isAdmin()) return;
+    const u = $('nUser').value.trim().toLowerCase(), p = $('nPass').value, role = $('nRole').value;
+    if (!/^[a-z0-9._-]{3,20}$/.test(u)) return alert('اسم المستخدم: حروف إنجليزية صغيرة وأرقام فقط (3 إلى 20 خانة)');
+    if (p.length < 6) return alert('كلمة المرور 6 خانات على الأقل');
+    const btn = $('addUserBtn'); btn.disabled = true;
+    try {
+      const cred = await createUserWithEmailAndPassword(auth2, toEmail(u), p);
+      await setDoc(doc(db, 'members', cred.user.uid), { name: u, role });
+      await signOut(auth2);
+      $('nUser').value = ''; $('nPass').value = '';
+      alert('تم حفظ المستخدم بنجاح!');
+    } catch (e) {
+      console.error(e);
+      alert(e.code === 'auth/email-already-in-use'
+        ? 'هذا المستخدم موجود مسبقاً بنظام الدخول. إذا حذفته سابقاً، احذف حسابه من Firebase ← Authentication ← Users ثم أعد المحاولة.'
+        : e.code === 'auth/weak-password' ? 'كلمة المرور ضعيفة، اختر كلمة أقوى'
+        : 'تعذّر إنشاء المستخدم: ' + (e.code || e.message));
+    } finally { btn.disabled = false; }
   },
-  delUser(el) {
-    const u = el.dataset.name;
-    if (u === 'admin') return alert('لا يمكن حذف المدير الرئيسي');
-    if (confirm(`حذف المستخدم ${u}؟`)) { delete accounts[u]; saveUsers(); render(); }
+  async delUser(el) {
+    if (!isAdmin() || el.dataset.id === me.uid) return;
+    if (!confirm(`حذف المستخدم ${el.dataset.name}؟ راح يفقد الدخول فوراً.`)) return;
+    try { await deleteDoc(doc(db, 'members', el.dataset.id)); }
+    catch (e) { showError(e); }
   }
 };
 
