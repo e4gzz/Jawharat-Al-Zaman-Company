@@ -27,7 +27,14 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;color:#f8fafc;margi
 /* ===== الشاشة الرئيسية ===== */
 .home{width:100%;max-width:560px;text-align:center}
 .home h1{font-size:28px;margin:0 0 4px}
-.hello{color:var(--mut);font-size:14px;margin-bottom:26px}
+.hello{color:var(--mut);font-size:14px;margin-bottom:18px}
+
+.main-clock-card{background:var(--glass);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid var(--gbd);border-radius:20px;padding:16px;margin-bottom:20px;box-shadow:0 15px 35px rgba(0,0,0,.3)}
+.home-day{font-size:18px;font-weight:700;color:var(--prl)}
+.home-date{font-size:14px;color:var(--mut);margin:2px 0 6px}
+.home-time{font-size:32px;font-weight:800;letter-spacing:1px;font-variant-numeric:tabular-nums}
+.home-time small{font-size:15px;font-weight:600;color:var(--mut);margin-right:6px}
+
 .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:22px}
 .tile{padding:28px 18px;border-radius:24px;background:var(--glass);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid var(--gbd);box-shadow:0 25px 60px rgba(0,0,0,.45);cursor:pointer;transition:transform .2s,border-color .2s,box-shadow .2s;animation:in .5s ease both}
 .tile:hover{transform:translateY(-4px);border-color:var(--pr);box-shadow:0 30px 60px rgba(99,102,241,.25)}
@@ -122,6 +129,14 @@ input,select,button,textarea{font-size:16px}.lcard{padding:30px 20px 22px}}
 <div class="home" id="vHome">
 <h1>🏠 الرئيسية</h1>
 <div class="hello" id="hello"></div>
+
+<!-- الساعة الحية والتاريخ في الشاشة الرئيسية -->
+<div class="main-clock-card">
+<div class="home-day" id="hDay"></div>
+<div class="home-date" id="hDate"></div>
+<div class="home-time" id="hTime"></div>
+</div>
+
 <div class="tiles">
 <div class="tile" data-act="open" data-sec="subs"><div class="t-ico">🔔</div><div class="t-name">الاشتراكات</div><div class="t-sum" id="sumSubs"></div></div>
 <div class="tile exp" data-act="open" data-sec="exp"><div class="t-ico">💸</div><div class="t-name">الصرفيات</div><div class="t-sum" id="sumExp"></div></div>
@@ -212,7 +227,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
-// تطبيق ثانوي فقط لإنشاء حسابات جديدة بدون ما يطلع المدير من حسابه
 const auth2 = getAuth(initializeApp(firebaseConfig, 'secondary'));
 
 // ===== بيانات النسخة التجريبية =====
@@ -248,11 +262,11 @@ function endText(p) {
 }
 
 // ===== الصرفيات =====
-const monthItems = k => (exps || []).filter(e => e.date.startsWith(k)).sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+const monthItems = k => (exps || []).filter(e => e.date && e.date.startsWith(k)).sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
 const sum = items => items.reduce((s, e) => s + e.amount, 0);
 
 // ===== الحالة =====
-let me = null;                  // { uid, name, role } بعد تسجيل الدخول
+let me = null;
 let authReady = false;
 let data = null, exps = null, members = [];
 let current = null, tab = 'countdown', panelOpen = false, section = 'home';
@@ -268,11 +282,10 @@ function showError(e) {
   console.error(e);
   const msg = 'خطأ بالاتصال بقاعدة البيانات: ' + (e.code || e.message);
   $('err').textContent = msg;
-  if (me && data === null) signOut(auth);          // فشل تحميل البيانات: رجّعه لصفحة الدخول مع الرسالة
+  if (me && data === null) signOut(auth);
   else if (!alerted) { alerted = true; alert(msg); }
 }
 
-// ===== الاستماع للبيانات (يبدأ بعد تسجيل الدخول فقط) =====
 function startListeners() {
   stopListeners();
   unsubs.push(onSnapshot(profilesRef, snap => {
@@ -303,7 +316,6 @@ function stopListeners() {
   data = null; exps = null; members = []; current = null;
 }
 
-// ===== حالة تسجيل الدخول =====
 onAuthStateChanged(auth, async u => {
   if (!u) {
     stopListeners(); me = null; authReady = true; section = 'home'; tab = 'countdown'; panelOpen = false;
@@ -338,14 +350,30 @@ async function login() {
   catch (e) { $('err').textContent = authMsg(e); }
 }
 
-// ===== الساعة الحية =====
+// ===== الساعة الحية (للشاشة الرئيسية وكارت الاشتراكات) =====
 let lastDay = today();
 function tick() {
   const n = new Date();
   const h = n.getHours(), ap = h >= 12 ? 'م' : 'ص', h12 = h % 12 || 12;
-  $('cDay').textContent = n.toLocaleDateString('ar-IQ', { weekday: 'long' });$('cDate').textContent = `${pad(n.getDate())}/${pad(n.getMonth() + 1)}/${n.getFullYear()}`;
-  $('cTime').innerHTML = `<span dir="ltr">${h12}:${pad(n.getMinutes())}:${pad(n.getSeconds())}</span><small>${ap}</small>`;
-  if (today() !== lastDay) { lastDay = today(); render(); }
+  const dayStr = n.toLocaleDateString('ar-IQ', { weekday: 'long' });
+  const dateStr = `${pad(n.getDate())}/${pad(n.getMonth() + 1)}/${n.getFullYear()}`;
+  const timeHTML = `<span dir="ltr">${h12}:${pad(n.getMinutes())}:${pad(n.getSeconds())}</span><small>${ap}</small>`;
+
+  // ساعة كارت الاشتراكات
+  $('cDay').textContent = dayStr;
+  $('cDate').textContent = dateStr;
+  $('cTime').innerHTML = timeHTML;
+
+  // ساعة الشاشة الرئيسية
+  $('hDay').textContent = dayStr;
+  $('hDate').textContent = dateStr;
+  $('hTime').innerHTML = timeHTML;
+
+  if (today() !== lastDay) { 
+    lastDay = today(); 
+    $('xDate').value = today();
+    render(); 
+  }
 }
 setInterval(tick, 1000);
 tick();
@@ -369,11 +397,12 @@ function render() {
   $('clockBox').style.display = showPanel ? 'none' : 'block';
   $('adminMenu').style.display = inSubs && adm ? 'flex' : 'none';
   $('tileUsers').style.display = adm ? 'block' : 'none';
+  $('eAdd').style.display = adm ? 'block' : 'none';
   $('sideTitle').textContent = inExp ? 'الصرفيات' : 'الاشتراكات';
 
   // الرئيسية
   $('hello').innerHTML = `مرحباً، <b>${esc(me.name)}</b>`;
-  const names = Object.keys(data), soon = names.filter(n => left(data[n]) <= 10).length;
+  const names = Object.keys(data || {}), soon = names.filter(n => left(data[n]) <= 10).length;
   $('sumSubs').innerHTML = `${names.length} اشتراك` + (soon ? `<br><span style="color:#fbbf24">⚠️ ${soon} ينتهي قريباً</span>` : '');
   const cm = monthKey(new Date());
   $('sumExp').innerHTML = `${esc(monthName(cm))}<br><b style="color:#fbbf24">${fmt(sum(monthItems(cm)))} ${CUR}</b>`;
@@ -392,7 +421,7 @@ function render() {
       return `<div class="item ${n === current && tab === 'countdown' ? 'active' : ''}" data-act="sel" data-name="${esc(n)}"><span style="font-weight:500">${esc(n)}</span><span class="badge ${cls(l)}">${l} يوم</span></div>`;
     }).join('') : '<div class="empty" style="text-align:center">لا توجد اشتراكات</div>';
   } else if (inExp) {
-    const ms = new Set((exps || []).map(e => e.date.slice(0, 7)));
+    const ms = new Set((exps || []).map(e => e.date ? e.date.slice(0, 7) : monthKey(new Date())));
     ms.add(monthKey(new Date())); ms.add(curMonth);
     $('list').innerHTML = [...ms].sort().reverse().map(m =>
       `<div class="item ${m === curMonth ? 'active' : ''}" data-act="selMonth" data-m="${m}"><span style="font-weight:500">${esc(monthName(m))}</span><span class="badge n">${fmt(sum(monthItems(m)))}</span></div>`).join('');
@@ -436,7 +465,10 @@ const act = {
   home() { section = 'home'; tab = 'countdown'; panelOpen = false; render(); },
   open(el) {
     section = el.dataset.sec; tab = 'countdown'; panelOpen = false;
-    if (section === 'exp') curMonth = monthKey(new Date());
+    if (section === 'exp') {
+      curMonth = monthKey(new Date());
+      if (!$('xDate').value)$('xDate').value = today();
+    }
     render();
   },
   view(el) { tab = el.dataset.tab; panelOpen = false; render(); },
@@ -482,17 +514,27 @@ const act = {
     saveData(); render();
   },
 
-  // --- الصرفيات ---
+  // --- الصرفيات (مصححة ومعدلة) ---
   selMonth(el) { curMonth = el.dataset.m; render(); },
   addExp() {
-    if (!isAdmin()) return;
-    const name = $('xName').value.trim(), date = $('xDate').value, amt = parseFloat($('xAmt').value);
-    if (!name || !date || isNaN(amt) || amt < 0) return alert('أدخل الاسم والتاريخ والمبلغ بشكل صحيح');
-    if (exps === null) return alert('جاري تحميل البيانات، حاول بعد ثواني');
+    if (!isAdmin()) return alert('ليس لديك صلاحية إضافة صرفيات');
+    const name = $('xName').value.trim();
+    const date = $('xDate').value || today();
+    const amt = parseFloat($('xAmt').value);
+
+    if (!name) return alert('يرجى كتابة اسم الصرفية');
+    if (isNaN(amt) || amt <= 0) return alert('يرجى إدخال مبلغ صحيح أكبر من 0');
+
+    if (!exps) exps = [];
     exps.push({ id: Date.now(), name, date, amount: amt });
     curMonth = date.slice(0, 7);
-    $('xName').value = '';$('xAmt').value = '';
-    saveExps(); render(); $('xName').focus();
+    
+    $('xName').value = ''; 
+    $('xAmt').value = '';$('xDate').value = today();
+
+    saveExps(); 
+    render(); 
+    $('xName').focus();
   },
   delExp(el) {
     if (!isAdmin()) return;
@@ -516,7 +558,7 @@ const act = {
     } catch (e) {
       console.error(e);
       alert(e.code === 'auth/email-already-in-use'
-        ? 'هذا المستخدم موجود مسبقاً بنظام الدخول. إذا حذفته سابقاً، احذف حسابه من Firebase ← Authentication ← Users ثم أعد المحاولة.'
+        ? 'هذا المستخدم موجود مسبقاً بنظام الدخول.'
         : e.code === 'auth/weak-password' ? 'كلمة المرور ضعيفة، اختر كلمة أقوى'
         : 'تعذّر إنشاء المستخدم: ' + (e.code || e.message));
     } finally { btn.disabled = false; }
