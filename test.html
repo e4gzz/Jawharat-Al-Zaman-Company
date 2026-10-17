@@ -215,9 +215,9 @@ input,select,button,textarea{font-size:16px}.lcard{padding:30px 20px 22px}}
 <input type="text" id="nUser" placeholder="اسم المستخدم (إنجليزي)" autocomplete="off" autocapitalize="none" spellcheck="false">
 <input type="password" id="nPass" placeholder="كلمة المرور (6 خانات على الأقل)" autocomplete="new-password">
 <select id="nRole">
-  <option value="viewer">مُشاهد (قراءة فقط)</option>
-  <option value="assistant">مسساعد (إضافة وحذف صرفيات)</option>
-  <option value="admin">مدير (تحكم كامل)</option>
+  <option value="viewer">مُشاهد</option>
+  <option value="assistant">مساعد</option>
+  <option value="admin">مدير</option>
 </select>
 <div class="hint">اسم المستخدم: حروف إنجليزية صغيرة وأرقام فقط (3 إلى 20).</div>
 <button data-act="addUser" id="addUserBtn">حفظ المستخدم</button>
@@ -256,7 +256,7 @@ function toggleTheme() {
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -442,10 +442,19 @@ function render() {
 
   if (adm) $('ulist').innerHTML = members.map(m => {
     const roleText = m.role === 'admin' ? 'مدير' : m.role === 'assistant' ? 'مساعد' : 'مُشاهد';
-    return `<div class="item"><span><b>${esc(m.name)}</b> (${roleText})</span>` +
-    (m.id !== me.uid
-      ? `<button class="dng" data-act="delUser" data-id="${esc(m.id)}" data-name="${esc(m.name)}" style="width:auto;padding:2px 8px;margin:0">حذف</button>`
-      : '<span style="font-size:11px;color:var(--mut)">أنت</span>') + '</div>';
+    return `<div class="item" style="cursor:default">
+      <span><b>${esc(m.name)}</b> (${roleText})</span>
+      <div style="display:flex;gap:6px;align-items:center">
+        ${m.id !== me.uid ? `
+          <select data-act="changeRole" data-id="${esc(m.id)}" style="width:auto;margin:0;padding:4px 8px;font-size:12px">
+            <option value="viewer" ${m.role === 'viewer' ? 'selected' : ''}>مُشاهد</option>
+            <option value="assistant" ${m.role === 'assistant' ? 'selected' : ''}>مساعد</option>
+            <option value="admin" ${m.role === 'admin' ? 'selected' : ''}>مدير</option>
+          </select>
+          <button class="dng" data-act="delUser" data-id="${esc(m.id)}" data-name="${esc(m.name)}" style="width:auto;padding:4px 8px;margin:0;font-size:12px">حذف</button>
+        ` : '<span style="font-size:11px;color:var(--mut)">أنت</span>'}
+      </div>
+    </div>`;
   }).join('');
 
   if (inSubs) {
@@ -609,9 +618,24 @@ const act = {
   }
 };
 
+// تعديل الرتبة مباشرة عند تغييرها من القائمة المنسدلة بجانب المستخدم
+document.addEventListener('change', async e => {
+  const target = e.target;
+  if (target.dataset.act === 'changeRole') {
+    if (!isAdmin()) return;
+    const uid = target.dataset.id;
+    const newRole = target.value;
+    try {
+      await updateDoc(doc(db, 'members', uid), { role: newRole });
+    } catch (err) {
+      showError(err);
+    }
+  }
+});
+
 document.addEventListener('click', e => {
   const el = e.target.closest('[data-act]');
-  if (el && act[el.dataset.act]) act[el.dataset.act](el);
+  if (el && el.dataset.act !== 'changeRole' && act[el.dataset.act]) act[el.dataset.act](el);
 });
 ['lu', 'lp'].forEach(id => $(id).addEventListener('keydown', e => { if (e.key === 'Enter') login(); }));
 ['xName', 'xAmt'].forEach(id => $(id).addEventListener('keydown', e => { if (e.key === 'Enter') act.addExp(); }));
