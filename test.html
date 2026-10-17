@@ -214,7 +214,11 @@ input,select,button,textarea{font-size:16px}.lcard{padding:30px 20px 22px}}
 <h2 style="color:var(--prl);text-align:center;margin-top:0">إدارة المستخدمين</h2>
 <input type="text" id="nUser" placeholder="اسم المستخدم (إنجليزي)" autocomplete="off" autocapitalize="none" spellcheck="false">
 <input type="password" id="nPass" placeholder="كلمة المرور (6 خانات على الأقل)" autocomplete="new-password">
-<select id="nRole"><option value="viewer">مُشاهد (قراءة فقط)</option><option value="admin">مدير (تحكم كامل)</option></select>
+<select id="nRole">
+  <option value="viewer">مُشاهد (قراءة فقط)</option>
+  <option value="assistant">مسساعد (إضافة وحذف صرفيات)</option>
+  <option value="admin">مدير (تحكم كامل)</option>
+</select>
 <div class="hint">اسم المستخدم: حروف إنجليزية صغيرة وأرقام فقط (3 إلى 20).</div>
 <button data-act="addUser" id="addUserBtn">حفظ المستخدم</button>
 <div id="ulist" style="max-height:180px;overflow-y:auto;margin-top:10px"></div>
@@ -223,7 +227,6 @@ input,select,button,textarea{font-size:16px}.lcard{padding:30px 20px 22px}}
 </div>
 
 <script>
-// سكริبت التحكم بالوضع (داكن / فاتح) مع الحفظ بذاكرة المتصفح
 function toggleTheme() {
   const html = document.documentElement;
   const currentTheme = html.getAttribute('data-theme');
@@ -239,7 +242,6 @@ function toggleTheme() {
   }
 }
 
-// استرجاع الوضع المحفوظ عند التحميل
 (function() {
   const savedTheme = localStorage.getItem('theme');
   if (savedTheme === 'light') {
@@ -310,6 +312,7 @@ let current = null, tab = 'countdown', panelOpen = false, section = 'home';
 let curMonth = monthKey(new Date());
 let unsubs = [];
 const isAdmin = () => me?.role === 'admin';
+const canManageExp = () => me?.role === 'admin' || me?.role === 'assistant';
 
 const saveData = () => setDoc(profilesRef, { data }).catch(showError);
 const saveExps = () => setDoc(expensesRef, { list: exps }).catch(showError);
@@ -415,7 +418,9 @@ function render() {
   if (loading || !me) { $('login').style.display = 'flex'; return; }$('login').style.display = 'none';
 
   const adm = isAdmin();
-  if (!adm) { if (section === 'settings') section = 'home'; tab = 'countdown'; panelOpen = false; }
+  const canExp = canManageExp();
+
+  if (!adm && section === 'settings') section = 'home';
   const inSubs = section === 'subs', inExp = section === 'exp';
   const showPanel = adm && inSubs && tab === 'countdown' && panelOpen && !!current;
 
@@ -426,7 +431,7 @@ function render() {
   $('adminBox').style.display = showPanel ? 'block' : 'none';
   $('adminMenu').style.display = inSubs && adm ? 'flex' : 'none';
   $('tileUsers').style.display = adm ? 'block' : 'none';
-  $('eAdd').style.display = adm ? 'block' : 'none';
+  $('eAdd').style.display = canExp ? 'block' : 'none';
   $('sideTitle').textContent = inExp ? 'الصرفيات' : 'الاشتراكات';
 
   $('hello').innerHTML = `مرحباً، <b>${esc(me.name)}</b>`;
@@ -435,11 +440,13 @@ function render() {
   const cm = monthKey(new Date());
   $('sumExp').innerHTML = `${esc(monthName(cm))}<br><b style="color:#fbbf24">${fmt(sum(monthItems(cm)))} ${CUR}</b>`;
 
-  if (adm) $('ulist').innerHTML = members.map(m =>
-    `<div class="item"><span><b>${esc(m.name)}</b> (${m.role === 'admin' ? 'مدير' : 'مُشاهد'})</span>` +
+  if (adm) $('ulist').innerHTML = members.map(m => {
+    const roleText = m.role === 'admin' ? 'مدير' : m.role === 'assistant' ? 'مساعد' : 'مُشاهد';
+    return `<div class="item"><span><b>${esc(m.name)}</b> (${roleText})</span>` +
     (m.id !== me.uid
       ? `<button class="dng" data-act="delUser" data-id="${esc(m.id)}" data-name="${esc(m.name)}" style="width:auto;padding:2px 8px;margin:0">حذف</button>`
-      : '<span style="font-size:11px;color:var(--mut)">أنت</span>') + '</div>').join('');
+      : '<span style="font-size:11px;color:var(--mut)">أنت</span>') + '</div>';
+  }).join('');
 
   if (inSubs) {
     $('list').innerHTML = names.length ? names.map(n => {
@@ -482,7 +489,7 @@ function render() {
     $('eCount').textContent = items.length ? `${items.length} صرفية خلال الشهر` : 'لا توجد صرفيات بهذا الشهر';
     $('eList').innerHTML = items.length ? items.map(e =>
       `<div class="erow"><div class="e-main"><b>${esc(e.name)}</b><span>${esc(fmtISO(e.date))}</span></div><div class="e-amt">${fmt(e.amount)} ${CUR}</div>` +
-      (adm ? `<button class="dng" data-act="delExp" data-id="${e.id}" aria-label="حذف">✕</button>` : '') + '</div>').join('')
+      (canExp ? `<button class="dng" data-act="delExp" data-id="${e.id}" aria-label="حذف">✕</button>` : '') + '</div>').join('')
       : '<div class="empty">ما توجد صرفيات لهذا الشهر بعد</div>';
   }
 }
@@ -510,11 +517,13 @@ const act = {
   },
   closePanel() { panelOpen = false; render(); },
   setDays() {
+    if (!isAdmin()) return;
     const v = parseInt($('dIn').value); if (isNaN(v) || !current) return;
     data[current] = { ...data[current], days: v, maxDays: v, start: today() };
     saveData(); render();
   },
   saveNote(el) {
+    if (!isAdmin()) return;
     if (!current) return;
     data[current].note = $('noteIn').value.trim();
     saveData(); render();
@@ -522,6 +531,7 @@ const act = {
     setTimeout(() => { el.textContent = 'حفظ النص'; }, 1500);
   },
   rename() {
+    if (!isAdmin()) return;
     if (!current) return;
     let n = prompt('الاسم الجديد للاشتراك:', current);
     if (!n || !n.trim()) return; n = n.trim();
@@ -530,10 +540,12 @@ const act = {
     saveData(); render();
   },
   delP() {
+    if (!isAdmin()) return;
     if (!current) return;
     if (confirm(`حذف اشتراك ${current}؟`)) { delete data[current]; current = Object.keys(data)[0] || null; panelOpen = false; saveData(); render(); }
   },
   create() {
+    if (!isAdmin()) return;
     const n = $('nName').value.trim(), d = parseInt($('nDays').value);
     if (!n || isNaN(d)) return alert('أدخل بيانات صحيحة');
     if (data[n]) return alert('الاشتراك موجود مسبقاً');
@@ -544,7 +556,7 @@ const act = {
 
   selMonth(el) { curMonth = el.dataset.m; render(); },
   addExp() {
-    if (!isAdmin()) return alert('ليس لديك صلاحية إضافة صرفيات');
+    if (!canManageExp()) return alert('ليس لديك صلاحية إضافة صرفيات');
     const name = $('xName').value.trim();
     const date = $('xDate').value || today();
     const amt = parseFloat($('xAmt').value);
@@ -564,7 +576,7 @@ const act = {
     $('xName').focus();
   },
   delExp(el) {
-    if (!isAdmin()) return;
+    if (!canManageExp()) return;
     const id = Number(el.dataset.id);
     if (confirm('حذف هذي الصرفية؟')) { exps = exps.filter(e => e.id !== id); saveExps(); render(); }
   },
