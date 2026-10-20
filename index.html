@@ -5,16 +5,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>العداد التنازلي للاشتراكات</title>
 <style>
-:root{color-scheme:dark;--bg:#0b0f19;--glass:rgba(30,41,59,.65);--gbd:rgba(148,163,184,.18);--bd:rgba(148,163,184,.25);--pr:#6366f1;--pr2:#8b5cf6;--prl:#a5b4fc;--mut:#94a3b8;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-html{background:#0b0f19;scroll-padding-top:env(safe-area-inset-top,0px)}
-body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;color:#f8fafc;margin:0;display:flex;height:100vh;overflow:hidden;box-sizing:border-box;background:radial-gradient(circle at 15% 15%,rgba(99,102,241,.35),transparent 45%),radial-gradient(circle at 85% 85%,rgba(16,185,129,.22),transparent 45%),#0b0f19;background-repeat:no-repeat}
+:root{color-scheme:dark;--bg:#0b0f19;--glass:rgba(30,41,59,.65);--gbd:rgba(148,163,184,.18);--bd:rgba(148,163,184,.25);--pr:#6366f1;--pr2:#8b5cf6;--prl:#a5b4fc;--mut:#94a3b8;--text:#f8fafc;--card-bg:radial-gradient(circle at 15% 15%,rgba(99,102,241,.35),transparent 45%),radial-gradient(circle at 85% 85%,rgba(16,185,129,.22),transparent 45%),#0b0f19;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+
+[data-theme="light"]{color-scheme:light;--bg:#eef2ff;--glass:rgba(255,255,255,.75);--gbd:rgba(99,102,241,.2);--bd:rgba(148,163,184,.35);--pr:#4f46e5;--pr2:#7c3aed;--prl:#4338ca;--mut:#64748b;--text:#0f172a;--card-bg:radial-gradient(circle at 15% 15%,rgba(99,102,241,.18),transparent 50%),radial-gradient(circle at 85% 85%,rgba(16,185,129,.15),transparent 50%),#eef2ff}
+
+html{background:var(--bg);scroll-padding-top:env(safe-area-inset-top,0px)}
+body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;color:var(--text);margin:0;display:flex;height:100vh;overflow:hidden;box-sizing:border-box;background:var(--card-bg);background-repeat:no-repeat;transition:background .3s ease, color .3s ease}
+
+/* زر تبديل الوضع (داكن / فاتح) */
+.theme-toggle{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));left:16px;z-index:10001;background:var(--glass);border:1px solid var(--gbd);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;box-shadow:0 4px 12px rgba(0,0,0,.15);transition:transform .2s, border-color .2s}
+.theme-toggle:hover{transform:scale(1.08);border-color:var(--pr)}
 
 /* ===== صفحة الدخول ===== */
-#login{position:fixed;inset:0;z-index:9999;display:flex;justify-content:center;align-items:center;padding:20px;box-sizing:border-box;overflow-y:auto;background:radial-gradient(circle at 15% 15%,rgba(99,102,241,.35),transparent 45%),radial-gradient(circle at 85% 85%,rgba(16,185,129,.22),transparent 45%),#0b0f19}
-.lcard{width:100%;max-width:400px;padding:36px 28px 28px;box-sizing:border-box;border-radius:24px;text-align:center;background:var(--glass);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid var(--gbd);box-shadow:0 25px 60px rgba(0,0,0,.45);animation:in .5s ease both}
+#login{position:fixed;inset:0;z-index:9999;display:flex;justify-content:center;align-items:center;padding:20px;box-sizing:border-box;overflow-y:auto;background:var(--card-bg)}
+.lcard{width:100%;max-width:400px;padding:36px 28px 28px;box-sizing:border-box;border-radius:24px;text-align:center;background:var(--glass);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid var(--gbd);box-shadow:0 25px 60px rgba(0,0,0,.15);animation:in .5s ease both}
 @keyframes in{from{opacity:0;transform:translateY(18px) scale(.98)}to{opacity:1;transform:none}}
 .logo{width:68px;height:68px;margin:0 auto 18px;border-radius:20px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 10px 30px rgba(99,102,241,.45)}
-.lcard h2{margin:0 0 6px;font-size:24px}.sub{color:var(--mut);font-size:14px;margin-bottom:26px}
+.lcard h2{margin:0 0 6px;font-size:24px;color:var(--text)}.sub{color:var(--mut);font-size:14px;margin-bottom:26px}
 .field{position:relative;margin-bottom:14px;text-align:right}
 .ico{position:absolute;right:14px;top:50%;transform:translateY(-50%);width:18px;height:18px;color:var(--mut);pointer-events:none}
 .field input{margin:0;padding:14px 44px}
@@ -23,27 +30,27 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;color:#f8fafc;margi
 #err{min-height:20px;margin-top:14px;font-size:13px;color:#f87171}
 
 /* ===== الداخل ===== */
-.sidebar{width:280px;background:rgba(17,24,39,.55);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-left:1px solid var(--gbd);padding:20px;display:flex;flex-direction:column;box-sizing:border-box;flex-shrink:0;overflow-y:auto}
+.sidebar{width:280px;background:var(--glass);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-left:1px solid var(--gbd);padding:20px;display:flex;flex-direction:column;box-sizing:border-box;flex-shrink:0;overflow-y:auto}
 .plist{flex:1;overflow-y:auto;margin-bottom:10px}
-.item{padding:12px 14px;background:rgba(15,23,42,.45);border:1px solid var(--gbd);border-radius:12px;margin-bottom:8px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:14px;transition:all .2s}
+.item{padding:12px 14px;background:var(--glass);border:1px solid var(--gbd);border-radius:12px;margin-bottom:8px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:14px;transition:all .2s;color:var(--text)}
 .item:hover{border-color:var(--pr);background:rgba(99,102,241,.1)}
 .item.active{border-color:var(--pr);background:rgba(99,102,241,.22);box-shadow:0 0 0 3px rgba(99,102,241,.15)}
 .badge{padding:4px 8px;border-radius:6px;font-weight:600;font-size:11px;color:#fff}
 .g{background:#10b981}.y{background:#f59e0b;color:#000}.r{background:#ef4444}
 .main{flex:1;display:flex;justify-content:center;align-items:center;padding:15px;overflow-y:auto;box-sizing:border-box}
-.card{background:var(--glass);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);padding:28px 22px;border-radius:24px;border:1px solid var(--gbd);box-shadow:0 25px 60px rgba(0,0,0,.45);text-align:center;width:100%;max-width:480px;box-sizing:border-box;animation:in .5s ease both}
+.card{background:var(--glass);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);padding:28px 22px;border-radius:24px;border:1px solid var(--gbd);box-shadow:0 25px 60px rgba(0,0,0,.15);text-align:center;width:100%;max-width:480px;box-sizing:border-box;animation:in .5s ease both}
 .big{font-size:60px;font-weight:800;color:#10b981;margin:10px 0;text-shadow:0 0 30px rgba(16,185,129,.35)}
-.note-view{display:none;margin:6px 0 4px;padding:14px 18px;text-align:center;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.28);border-radius:16px;font-size:16px;line-height:1.8;color:#e2e8f0;white-space:pre-wrap;word-break:break-word}
-.admin-box{display:none;margin-top:18px;text-align:right;background:rgba(11,15,25,.45);border:1px solid var(--gbd);padding:14px;border-radius:16px}
-input,select,button,textarea{width:100%;padding:12px 14px;margin-bottom:10px;background:rgba(11,15,25,.7);border:1px solid var(--bd);color:#fff;border-radius:12px;box-sizing:border-box;font-size:14px;font-family:inherit;transition:border-color .2s,box-shadow .2s,transform .15s}
+.note-view{display:none;margin:6px 0 4px;padding:14px 18px;text-align:center;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.28);border-radius:16px;font-size:16px;line-height:1.8;color:var(--text);white-space:pre-wrap;word-break:break-word}
+.admin-box{display:none;margin-top:18px;text-align:right;background:var(--glass);border:1px solid var(--gbd);padding:14px;border-radius:16px}
+input,select,button,textarea{width:100%;padding:12px 14px;margin-bottom:10px;background:var(--glass);border:1px solid var(--bd);color:var(--text);border-radius:12px;box-sizing:border-box;font-size:14px;font-family:inherit;transition:border-color .2s,box-shadow .2s,transform .15s}
 textarea{min-height:80px;resize:vertical;line-height:1.6}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--pr);box-shadow:0 0 0 3px rgba(99,102,241,.25)}
-option{background:#0b0f19}
-button{background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;cursor:pointer;font-weight:600;box-shadow:0 8px 22px rgba(99,102,241,.35)}
+option{background:var(--bg);color:var(--text)}
+button{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;cursor:pointer;font-weight:600;box-shadow:0 8px 22px rgba(99,102,241,.35)}
 button:hover{background:linear-gradient(135deg,#4f46e5,#7c3aed);transform:translateY(-1px);box-shadow:0 12px 28px rgba(99,102,241,.45)}
 button:active{transform:none}
-.sec{background:rgba(51,65,85,.75);box-shadow:none}.sec:hover{background:rgba(71,85,105,.85);box-shadow:none}
-.dng{background:linear-gradient(135deg,#ef4444,#dc2626);box-shadow:0 8px 22px rgba(239,68,68,.3)}.dng:hover{background:linear-gradient(135deg,#dc2626,#b91c1c);box-shadow:0 12px 28px rgba(239,68,68,.4)}
+.sec{background:rgba(148,163,184,.2);color:var(--text);box-shadow:none}.sec:hover{background:rgba(148,163,184,.3);box-shadow:none}
+.dng{background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;box-shadow:0 8px 22px rgba(239,68,68,.3)}.dng:hover{background:linear-gradient(135deg,#dc2626,#b91c1c);box-shadow:0 12px 28px rgba(239,68,68,.4)}
 @media(max-width:768px){
 body{flex-direction:column;height:auto;min-height:100vh;min-height:100dvh;overflow-x:hidden;overflow-y:auto}
 .main{order:1;flex:none;padding:12px;align-items:flex-start;overflow:visible}
@@ -53,6 +60,9 @@ input,select,button,textarea{font-size:16px}.lcard{padding:30px 20px 22px}}
 </style>
 </head>
 <body>
+
+<!-- زر تبديل الوضع (داكن / فاتح) -->
+<button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="تبديل الوضع">🌙</button>
 
 <div id="login"><div class="lcard">
 <div class="logo"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
@@ -104,12 +114,44 @@ input,select,button,textarea{font-size:16px}.lcard{padding:30px 20px 22px}}
 <h2 style="color:var(--prl);text-align:center;margin-top:0">إدارة المستخدمين</h2>
 <input type="text" id="nUser" placeholder="يوزر جديد" autocomplete="off">
 <input type="password" id="nPass" placeholder="كلمة المرور" autocomplete="new-password">
-<select id="nRole"><option value="viewer">مُشاهد (قراءة فقط)</option><option value="admin">مدير (تحكم كامل)</option></select>
+<select id="nRole">
+  <option value="viewer">مُشاهد</option>
+  <option value="assistant">مساعد</option>
+  <option value="admin">مدير</option>
+</select>
 <button data-act="addUser">حفظ المستخدم</button>
-<div id="ulist" style="max-height:120px;overflow-y:auto;margin-top:10px"></div>
+<div id="ulist" style="max-height:180px;overflow-y:auto;margin-top:10px"></div>
 <button class="sec" data-act="view" data-tab="countdown" style="margin-top:10px">العودة</button>
 </div>
 </div>
+
+<script>
+function toggleTheme() {
+  const html = document.documentElement;
+  const currentTheme = html.getAttribute('data-theme');
+  const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+  if (newTheme === 'light') {
+    html.setAttribute('data-theme', 'light');
+    localStorage.setItem('theme', 'light');
+    document.getElementById('themeToggle').textContent = '☀️';
+  } else {
+    html.removeAttribute('data-theme');
+    localStorage.setItem('theme', 'dark');
+    document.getElementById('themeToggle').textContent = '🌙';
+  }
+}
+
+(function() {
+  const savedTheme = localStorage.getItem('theme');
+  if (savedTheme === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+    window.addEventListener('DOMContentLoaded', () => {
+      const t = document.getElementById('themeToggle');
+      if (t) t.textContent = '☀️';
+    });
+  }
+})();
+</script>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -125,6 +167,7 @@ const firebaseConfig = {
 };
 
 const db = getFirestore(initializeApp(firebaseConfig));
+// المسارات الأساسية القديمة دون أي تغيير للحفاظ على بياناتك
 const usersRef = doc(db, 'app', 'users');
 const profilesRef = doc(db, 'app', 'profiles');
 
@@ -132,7 +175,6 @@ const $ = id => document.getElementById(id);
 const pad = n => String(n).padStart(2, '0');
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-// ===== العد التنازلي: ينقص يوم عند 12 بالليل =====
 const today = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
 const dn = k => { const [y, m, d] = k.split('-').map(Number); return Date.UTC(y, m - 1, d) / 86400000; };
 const left = p => Math.max(0, (p.maxDays ?? p.days) - Math.max(0, dn(today()) - dn(p.start || today())));
@@ -164,39 +206,47 @@ onSnapshot(profilesRef, snap => {
   render();
 }, showError);
 
-// تحديث الرقم تلقائياً لو تغيّر اليوم والصفحة مفتوحة
 let lastDay = today();
 setInterval(() => { if (today() !== lastDay) { lastDay = today(); render(); } }, 30000);
 
 function login() {
-  const u = $('lu').value.trim(), p = $('lp').value.trim();
+  const u = $('lu').value.trim(), p =$('lp').value.trim();
   if (!accounts) { $('err').textContent = 'جاري الاتصال بقاعدة البيانات، حاول بعد ثواني...'; return; }
   if (!u || !p) { $('err').textContent = 'أدخل اسم المستخدم وكلمة المرور'; return; }
   if (accounts[u] && String(accounts[u].pass) === p) {
     user = u;
     localStorage.setItem('current_logged_user_v11', JSON.stringify({ username: u }));
-    $('err').textContent = ''; $('lp').value = '';
+    $('err').textContent = '';$('lp').value = '';
     render();
   } else $('err').textContent = 'اسم المستخدم أو كلمة المرور غير صحيحة!';
 }
 
 function render() {
   if (!accounts || !data) return;
-  if (!user || !accounts[user]) { $('login').style.display = 'flex'; return; }
-  $('login').style.display = 'none';
+  if (!user || !accounts[user]) { $('login').style.display = 'flex'; return; }$('login').style.display = 'none';
   const adm = accounts[user].role === 'admin';
   if (!adm) tab = 'countdown';
-  $('vCount').style.display = tab === 'countdown' ? 'block' : 'none';
-  $('vCreate').style.display = adm && tab === 'create' ? 'block' : 'none';
-  $('vSettings').style.display = adm && tab === 'settings' ? 'block' : 'none';
-  $('adminBox').style.display = adm ? 'block' : 'none';
+  $('vCount').style.display = tab === 'countdown' ? 'block' : 'none';$('vCreate').style.display = adm && tab === 'create' ? 'block' : 'none';
+  $('vSettings').style.display = adm && tab === 'settings' ? 'block' : 'none';$('adminBox').style.display = adm ? 'block' : 'none';
   $('adminMenu').style.display = adm ? 'flex' : 'none';
 
-  if (adm) $('ulist').innerHTML = Object.keys(accounts).map(u =>
-    `<div class="item"><span><b>${esc(u)}</b> (${esc(accounts[u].role)})</span>` +
-    (u !== 'admin'
-      ? `<button class="dng" data-act="delUser" data-name="${esc(u)}" style="width:auto;padding:2px 8px;margin:0">حذف</button>`
-      : '<span style="font-size:11px;color:var(--mut)">رئيسي</span>') + '</div>').join('');
+  if (adm) $('ulist').innerHTML = Object.keys(accounts).map(u => {
+    const r = accounts[u].role;
+    const roleText = r === 'admin' ? 'مدير' : r === 'assistant' ? 'مساعد' : 'مُشاهد';
+    return `<div class="item" style="cursor:default">
+      <span><b>${esc(u)}</b> (${roleText})</span>
+      <div style="display:flex;gap:6px;align-items:center">
+        ${u !== 'admin' ? `
+          <select data-act="changeRole" data-user="${esc(u)}" style="width:auto;margin:0;padding:4px 8px;font-size:12px">
+            <option value="viewer" ${r === 'viewer' ? 'selected' : ''}>مُشاهد</option>
+            <option value="assistant" ${r === 'assistant' ? 'selected' : ''}>مساعد</option>
+            <option value="admin" ${r === 'admin' ? 'selected' : ''}>مدير</option>
+          </select>
+          <button class="dng" data-act="delUser" data-name="${esc(u)}" style="width:auto;padding:4px 8px;margin:0;font-size:12px">حذف</button>
+        ` : '<span style="font-size:11px;color:var(--mut)">رئيسي</span>'}
+      </div>
+    </div>`;
+  }).join('');
 
   $('list').innerHTML = Object.keys(data).map(n => {
     const l = left(data[n]);
@@ -209,12 +259,11 @@ function render() {
   const p = data[current];
   if (p) {
     $('days').textContent = left(p);
-    // النص يظهر داخل البطاقة الرئيسية تحت الأيام المتبقية (بدون عنوان)
     const note = (p.note || '').trim();
     $('noteView').textContent = note;
     $('noteView').style.display = note ? 'block' : 'none';
-    if (document.activeElement !== $('dIn')) $('dIn').value = p.maxDays ?? p.days;
-    if (document.activeElement !== $('noteIn')) $('noteIn').value = p.note || '';
+    if (document.activeElement !== $('dIn'))$('dIn').value = p.maxDays ?? p.days;
+    if (document.activeElement !== $('noteIn'))$('noteIn').value = p.note || '';
   }
 }
 
@@ -251,15 +300,15 @@ const act = {
     if (!n || isNaN(d)) return alert('أدخل بيانات صحيحة');
     if (data[n]) return alert('الاشتراك موجود مسبقاً');
     data[n] = { days: d, maxDays: d, start: today(), note: $('nNote').value.trim() };
-    current = n; $('nName').value = ''; $('nNote').value = ''; tab = 'countdown';
+    current = n; $('nName').value = '';$('nNote').value = ''; tab = 'countdown';
     saveData(); render();
   },
   addUser() {
-    const u = $('nUser').value.trim(), p = $('nPass').value.trim();
+    const u = $('nUser').value.trim(), p =$('nPass').value.trim();
     if (!u || !p) return alert('أدخل اليوزر والباسورد');
     if (accounts[u]) return alert('المستخدم موجود مسبقاً!');
     accounts[u] = { pass: p, role: $('nRole').value, name: u };
-    $('nUser').value = ''; $('nPass').value = '';
+    $('nUser').value = '';$('nPass').value = '';
     saveUsers(); alert('تم حفظ المستخدم بنجاح!'); render();
   },
   delUser(el) {
@@ -269,9 +318,22 @@ const act = {
   }
 };
 
+// تعديل الرتبة مباشرة دون الحاجة لإعادة إنشاء الحساب
+document.addEventListener('change', e => {
+  const target = e.target;
+  if (target.dataset.act === 'changeRole') {
+    const targetUser = target.dataset.user;
+    if (accounts && accounts[targetUser]) {
+      accounts[targetUser].role = target.value;
+      saveUsers();
+      render();
+    }
+  }
+});
+
 document.addEventListener('click', e => {
   const el = e.target.closest('[data-act]');
-  if (el && act[el.dataset.act]) act[el.dataset.act](el);
+  if (el && el.dataset.act !== 'changeRole' && act[el.dataset.act]) act[el.dataset.act](el);
 });
 ['lu', 'lp'].forEach(id => $(id).addEventListener('keydown', e => { if (e.key === 'Enter') login(); }));
 </script>
