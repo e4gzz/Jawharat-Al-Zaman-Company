@@ -208,14 +208,13 @@ input,select,button,textarea{font-size:16px}.lcard{padding:30px 20px 22px}}
 
 <div class="card" id="vSettings" style="display:none;text-align:right">
 <h2 style="color:var(--prl);text-align:center;margin-top:0">إدارة المستخدمين</h2>
-<input type="text" id="nUser" placeholder="اسم المستخدم (إنجليزي)" autocomplete="off" autocapitalize="none" spellcheck="false">
-<input type="password" id="nPass" placeholder="كلمة المرور (6 خانات على الأقل)" autocomplete="new-password">
+<input type="text" id="nUser" placeholder="اسم المستخدم" autocomplete="off" autocapitalize="none" spellcheck="false">
+<input type="password" id="nPass" placeholder="كلمة المرور">
 <select id="nRole">
   <option value="viewer">مُشاهد</option>
   <option value="assistant">مساعد</option>
   <option value="admin">مدير</option>
 </select>
-<div class="hint">اسم المستخدم: حروف إنجليزية صغيرة وأرقام فقط (3 إلى 20).</div>
 <button data-act="addUser" id="addUserBtn">حفظ المستخدم</button>
 <div id="ulist" style="max-height:180px;overflow-y:auto;margin-top:10px"></div>
 <button class="sec" data-act="home" style="margin-top:10px">العودة للرئيسية</button>
@@ -252,8 +251,7 @@ function toggleTheme() {
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBraw98K7uLeQ5p7xmgn88x2jczO2EtzXM",
@@ -266,14 +264,12 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const auth = getAuth(app);
-const auth2 = getAuth(initializeApp(firebaseConfig, 'secondary'));
 
-const profilesRef = doc(db, 'app', 'profiles_test');
-const expensesRef = doc(db, 'app', 'expenses_test');
-const membersCol = collection(db, 'members');
-const EMAIL_DOMAIN = 'jawharat.app';
-const toEmail = u => `${u}@${EMAIL_DOMAIN}`;
+// العودة واستخدام جداول البيانات القديمة الخاصة بك
+const usersRef = doc(db, 'app', 'users');
+const profilesRef = doc(db, 'app', 'profiles');
+const expensesRef = doc(db, 'app', 'expenses');
+
 const CUR = 'د.ع';
 
 const $ = id => document.getElementById(id);
@@ -301,89 +297,57 @@ function endText(p) {
 const monthItems = k => (exps || []).filter(e => e.date && e.date.startsWith(k)).sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
 const sum = items => items.reduce((s, e) => s + e.amount, 0);
 
-let me = null;
-let authReady = false;
-let data = null, exps = null, members = [];
-let current = null, tab = 'countdown', panelOpen = false, section = 'home';
+let accounts = null, data = null, exps = null, user = null, current = null, tab = 'countdown', panelOpen = false, section = 'home';
 let curMonth = monthKey(new Date());
-let unsubs = [];
-const isAdmin = () => me?.role === 'admin';
-const canManageExp = () => me?.role === 'admin' || me?.role === 'assistant';
+
+try { user = JSON.parse(localStorage.getItem('current_logged_user_v11'))?.username || null; } catch (e) {}
+
+const isAdmin = () => accounts && user && accounts[user]?.role === 'admin';
+const canManageExp = () => accounts && user && (accounts[user]?.role === 'admin' || accounts[user]?.role === 'assistant');
 
 const saveData = () => setDoc(profilesRef, { data }).catch(showError);
+const saveUsers = () => setDoc(usersRef, { accounts }).catch(showError);
 const saveExps = () => setDoc(expensesRef, { list: exps }).catch(showError);
 
-let alerted = false;
 function showError(e) {
   console.error(e);
-  const msg = 'خطأ بالاتصال بقاعدة البيانات: ' + (e.code || e.message);
-  $('err').textContent = msg;
-  if (me && data === null) signOut(auth);
-  else if (!alerted) { alerted = true; alert(msg); }
+  $('err').textContent = 'خطأ بالاتصال بقاعدة البيانات: ' + (e.code || e.message);
 }
 
-function startListeners() {
-  stopListeners();
-  unsubs.push(onSnapshot(profilesRef, snap => {
-    if (snap.exists()) data = snap.data().data || {};
-    else {
-      data = {};
-      if (isAdmin()) { data = { 'الهدف الأساسي': { days: 92, maxDays: 92, start: today(), note: '' } }; saveData(); }
-    }
-    if (isAdmin()) {
-      let ch = false;
-      for (const n in data) if (!data[n].start) { data[n].start = today(); ch = true; }
-      if (ch) saveData();
-    }
-    if (!current || !data[current]) current = Object.keys(data)[0] || null;
-    render();
-  }, showError));
-  unsubs.push(onSnapshot(expensesRef, snap => {
-    exps = snap.exists() ? (snap.data().list || []) : [];
-    render();
-  }, showError));
-  if (isAdmin()) unsubs.push(onSnapshot(membersCol, snap => {
-    members = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    render();
-  }, showError));
-}
-function stopListeners() {
-  unsubs.forEach(f => f()); unsubs = [];
-  data = null; exps = null; members = []; current = null;
-}
+// قراءة بيانات المستخدمين القديمة
+onSnapshot(usersRef, snap => {
+  if (snap.exists()) accounts = snap.data().accounts || {};
+  else { accounts = { admin: { pass: '1234', role: 'admin', name: 'المدير الأساسي' } }; saveUsers(); }
+  render();
+}, showError);
 
-onAuthStateChanged(auth, async u => {
-  if (!u) {
-    stopListeners(); me = null; authReady = true; section = 'home'; tab = 'countdown'; panelOpen = false;
-    render(); return;
-  }
-  try {
-    const m = await getDoc(doc(db, 'members', u.uid));
-    if (!m.exists()) {
-      $('err').textContent = 'حسابك غير مفعّل بالنظام، تواصل مع المدير';
-      await signOut(auth); return;
-    }
-    me = { uid: u.uid, ...m.data() };
-    authReady = true; section = 'home';
-    startListeners(); render();
-  } catch (e) { showError(e); await signOut(auth); }
-});
+// قراءة بيانات الاشتراكات القديمة
+onSnapshot(profilesRef, snap => {
+  if (snap.exists()) data = snap.data().data || {};
+  else { data = { 'الهدف الأساسي': { days: 92, maxDays: 92, start: today(), note: '' } }; saveData(); }
+  let changed = false;
+  for (const n in data) if (!data[n].start) { data[n].start = today(); changed = true; }
+  if (changed) saveData();
+  if (!current || !data[current]) current = Object.keys(data)[0] || null;
+  render();
+}, showError);
 
-const authMsg = e => ({
-  'auth/invalid-credential': 'اسم المستخدم أو كلمة المرور غير صحيحة!',
-  'auth/wrong-password': 'اسم المستخدم أو كلمة المرور غير صحيحة!',
-  'auth/user-not-found': 'اسم المستخدم أو كلمة المرور غير صحيحة!',
-  'auth/invalid-email': 'اسم المستخدم غير صالح',
-  'auth/too-many-requests': 'محاولات كثيرة، انتظر قليلاً وحاول مرة ثانية',
-  'auth/network-request-failed': 'تأكد من اتصال الإنترنت'
-}[e.code] || 'تعذّر تسجيل الدخول: ' + (e.code || e.message));
+// قراءة الصرفيات
+onSnapshot(expensesRef, snap => {
+  exps = snap.exists() ? (snap.data().list || []) : [];
+  render();
+}, showError);
 
-async function login() {
-  const u = $('lu').value.trim().toLowerCase(), p =$('lp').value;
+function login() {
+  const u = $('lu').value.trim(), p =$('lp').value.trim();
+  if (!accounts) { $('err').textContent = 'جاري الاتصال بقاعدة البيانات...'; return; }
   if (!u || !p) { $('err').textContent = 'أدخل اسم المستخدم وكلمة المرور'; return; }
-  $('err').textContent = 'جاري الدخول...';
-  try { await signInWithEmailAndPassword(auth, toEmail(u), p); $('lp').value = ''; }
-  catch (e) { $('err').textContent = authMsg(e); }
+  if (accounts[u] && String(accounts[u].pass) === p) {
+    user = u;
+    localStorage.setItem('current_logged_user_v11', JSON.stringify({ username: u }));
+    $('err').textContent = '';$('lp').value = '';
+    render();
+  } else $('err').textContent = 'اسم المستخدم أو كلمة المرور غير صحيحة!';
 }
 
 let lastDay = today();
@@ -409,9 +373,8 @@ tick();
 $('xDate').value = today();
 
 function render() {
-  const loading = !authReady || (me && data === null);
-  $('lcard').style.visibility = loading ? 'hidden' : 'visible';
-  if (loading || !me) { $('login').style.display = 'flex'; return; }$('login').style.display = 'none';
+  $('lcard').style.visibility = 'visible';
+  if (!user || !accounts || !accounts[user]) { $('login').style.display = 'flex'; return; }$('login').style.display = 'none';
 
   const adm = isAdmin();
   const canExp = canManageExp();
@@ -430,24 +393,25 @@ function render() {
   $('eAdd').style.display = canExp ? 'block' : 'none';
   $('sideTitle').textContent = inExp ? 'الصرفيات' : 'الاشتراكات';
 
-  $('hello').innerHTML = `مرحباً، <b>${esc(me.name)}</b>`;
+  $('hello').innerHTML = `مرحباً، <b>${esc(accounts[user].name || user)}</b>`;
   const names = Object.keys(data || {}), soon = names.filter(n => left(data[n]) <= 10).length;
   $('sumSubs').innerHTML = `${names.length} اشتراك` + (soon ? `<br><span style="color:#fbbf24">⚠️ ${soon} ينتهي قريباً</span>` : '');
   const cm = monthKey(new Date());
   $('sumExp').innerHTML = `${esc(monthName(cm))}<br><b style="color:#fbbf24">${fmt(sum(monthItems(cm)))} ${CUR}</b>`;
 
-  if (adm) $('ulist').innerHTML = members.map(m => {
-    const roleText = m.role === 'admin' ? 'مدير' : m.role === 'assistant' ? 'مساعد' : 'مُشاهد';
+  if (adm) $('ulist').innerHTML = Object.keys(accounts).map(u => {
+    const r = accounts[u].role;
+    const roleText = r === 'admin' ? 'مدير' : r === 'assistant' ? 'مساعد' : 'مُشاهد';
     return `<div class="item" style="cursor:default">
-      <span><b>${esc(m.name)}</b> (${roleText})</span>
+      <span><b>${esc(u)}</b> (${roleText})</span>
       <div style="display:flex;gap:6px;align-items:center">
-        ${m.id !== me.uid ? `
-          <select data-act="changeRole" data-id="${esc(m.id)}" style="width:auto;margin:0;padding:4px 8px;font-size:12px">
-            <option value="viewer" ${m.role === 'viewer' ? 'selected' : ''}>مُشاهد</option>
-            <option value="assistant" ${m.role === 'assistant' ? 'selected' : ''}>مساعد</option>
-            <option value="admin" ${m.role === 'admin' ? 'selected' : ''}>مدير</option>
+        ${u !== 'admin' && u !== user ? `
+          <select data-act="changeRole" data-user="${esc(u)}" style="width:auto;margin:0;padding:4px 8px;font-size:12px">
+            <option value="viewer" ${r === 'viewer' ? 'selected' : ''}>مُشاهد</option>
+            <option value="assistant" ${r === 'assistant' ? 'selected' : ''}>مساعد</option>
+            <option value="admin" ${r === 'admin' ? 'selected' : ''}>مدير</option>
           </select>
-          <button class="dng" data-act="delUser" data-id="${esc(m.id)}" data-name="${esc(m.name)}" style="width:auto;padding:4px 8px;margin:0;font-size:12px">حذف</button>
+          <button class="dng" data-act="delUser" data-name="${esc(u)}" style="width:auto;padding:4px 8px;margin:0;font-size:12px">حذف</button>
         ` : '<span style="font-size:11px;color:var(--mut)">أنت</span>'}
       </div>
     </div>`;
@@ -481,16 +445,16 @@ function render() {
     $('noteView').textContent = note;
     $('noteView').style.display = note ? 'block' : 'none';
     $('pName').textContent = current;
-    if (document.activeElement !== $('dIn'))$('dIn').value = t;
-    if (document.activeElement !== $('noteIn'))$('noteIn').value = p.note || '';
+    if (document.activeElement !== $('dIn')) $('dIn').value = t;
+    if (document.activeElement !== $('noteIn')) $('noteIn').value = p.note || '';
   } else {
-    $('days').textContent = '—';$('progBar').style.width = '0'; $('progBar').className = '';$('progTxt').textContent = ''; $('endTxt').textContent = '';$('noteView').style.display = 'none';
+    $('days').textContent = '—'; $('progBar').style.width = '0'; $('progBar').className = ''; $('progTxt').textContent = ''; $('endTxt').textContent = ''; $('noteView').style.display = 'none';
   }
 
   if (inExp) {
     const items = monthItems(curMonth);
     $('eMonth').textContent = monthName(curMonth);
-    $('eTotal').textContent = fmt(sum(items));$('eCur').textContent = CUR;
+    $('eTotal').textContent = fmt(sum(items)); $('eCur').textContent = CUR;
     $('eCount').textContent = items.length ? `${items.length} صرفية خلال الشهر` : 'لا توجد صرفيات بهذا الشهر';
     $('eList').innerHTML = items.length ? items.map(e =>
       `<div class="erow"><div class="e-main"><b>${esc(e.name)}</b><span>${esc(fmtISO(e.date))}</span></div><div class="e-amt">${fmt(e.amount)} ${CUR}</div>` +
@@ -502,13 +466,13 @@ function render() {
 const act = {
   login,
   eye(el) { const i = $('lp'); i.type = i.type === 'password' ? 'text' : 'password'; el.textContent = i.type === 'password' ? '👁️' : '🙈'; },
-  logout() { $('err').textContent = ''; signOut(auth); },
+  logout() { localStorage.removeItem('current_logged_user_v11'); user = null; tab = 'countdown'; render(); },
   home() { section = 'home'; tab = 'countdown'; panelOpen = false; render(); },
   open(el) {
     section = el.dataset.sec; tab = 'countdown'; panelOpen = false;
     if (section === 'exp') {
       curMonth = monthKey(new Date());
-      if (!$('xDate').value)$('xDate').value = today();
+      if (!$('xDate').value) $('xDate').value = today();
     }
     render();
   },
@@ -586,45 +550,32 @@ const act = {
     if (confirm('حذف هذي الصرفية؟')) { exps = exps.filter(e => e.id !== id); saveExps(); render(); }
   },
 
-  async addUser() {
+  addUser() {
     if (!isAdmin()) return;
-    const u = $('nUser').value.trim().toLowerCase(), p = $('nPass').value, role = $('nRole').value;
-    if (!/^[a-z0-9._-]{3,20}$/.test(u)) return alert('اسم المستخدم: حروف إنجليزية صغيرة وأرقام فقط (3 إلى 20 خانة)');
-    if (p.length < 6) return alert('كلمة المرور 6 خانات على الأقل');
-    const btn = $('addUserBtn'); btn.disabled = true;
-    try {
-      const cred = await createUserWithEmailAndPassword(auth2, toEmail(u), p);
-      await setDoc(doc(db, 'members', cred.user.uid), { name: u, role });
-      await signOut(auth2);
-      $('nUser').value = ''; $('nPass').value = '';
-      alert('تم حفظ المستخدم بنجاح!');
-    } catch (e) {
-      console.error(e);
-      alert(e.code === 'auth/email-already-in-use'
-        ? 'هذا المستخدم موجود مسبقاً بنظام الدخول.'
-        : e.code === 'auth/weak-password' ? 'كلمة المرور ضعيفة، اختر كلمة أقوى'
-        : 'تعذّر إنشاء المستخدم: ' + (e.code || e.message));
-    } finally { btn.disabled = false; }
+    const u = $('nUser').value.trim(), p = $('nPass').value.trim(), role = $('nRole').value;
+    if (!u || !p) return alert('أدخل اليوزر والباسورد');
+    if (accounts[u]) return alert('المستخدم موجود مسبقاً!');
+    accounts[u] = { pass: p, role: role, name: u };
+    $('nUser').value = ''; $('nPass').value = '';
+    saveUsers(); alert('تم حفظ المستخدم بنجاح!'); render();
   },
-  async delUser(el) {
-    if (!isAdmin() || el.dataset.id === me.uid) return;
-    if (!confirm(`حذف المستخدم ${el.dataset.name}؟ راح يفقد الدخول فوراً.`)) return;
-    try { await deleteDoc(doc(db, 'members', el.dataset.id)); }
-    catch (e) { showError(e); }
+  delUser(el) {
+    if (!isAdmin()) return;
+    const u = el.dataset.name;
+    if (u === 'admin') return alert('لا يمكن حذف المدير الرئيسي');
+    if (confirm(`حذف المستخدم ${u}؟`)) { delete accounts[u]; saveUsers(); render(); }
   }
 };
 
-// تعديل الرتبة مباشرة عند تغييرها من القائمة المنسدلة بجانب المستخدم
-document.addEventListener('change', async e => {
+document.addEventListener('change', e => {
   const target = e.target;
   if (target.dataset.act === 'changeRole') {
     if (!isAdmin()) return;
-    const uid = target.dataset.id;
-    const newRole = target.value;
-    try {
-      await updateDoc(doc(db, 'members', uid), { role: newRole });
-    } catch (err) {
-      showError(err);
+    const targetUser = target.dataset.user;
+    if (accounts && accounts[targetUser]) {
+      accounts[targetUser].role = target.value;
+      saveUsers();
+      render();
     }
   }
 });
